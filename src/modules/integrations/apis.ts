@@ -31,9 +31,13 @@ class SentinelHubService {
     const clientId = process.env.SENTINELHUB_CLIENT_ID;
     const clientSecret = process.env.SENTINELHUB_CLIENT_SECRET;
 
+    console.log('🔑 Verificando credenciais Sentinel Hub:');
+    console.log('   CLIENT_ID:', clientId ? `${clientId.substring(0, 8)}...` : '❌ INDEFINIDO');
+    console.log('   CLIENT_SECRET:', clientSecret ? `${clientSecret.substring(0, 8)}...` : '❌ INDEFINIDO');
+
     if (!clientId || !clientSecret) {
       const errorMessage = 'Sentinel Hub Client ID e Secret devem ser fornecidos nas variáveis de ambiente (SENTINELHUB_CLIENT_ID, SENTINELHUB_CLIENT_SECRET).';
-      console.error(errorMessage);
+      console.error('❌', errorMessage);
       throw new Error(errorMessage);
     }
 
@@ -56,9 +60,12 @@ class SentinelHubService {
       const { access_token, expires_in } = response.data;
       this.oauthToken = access_token;
       this.tokenExpiry = new Date(new Date().getTime() + (expires_in - 60) * 1000);
-      console.log('Token de autenticação do Sentinel Hub obtido com sucesso.');
+      console.log('✅ Token Sentinel Hub obtido! Expira em:', this.tokenExpiry.toLocaleTimeString('pt-BR'));
     } catch (error: any) {
-      console.error('Erro ao buscar token de autenticação do Sentinel Hub:', error.response?.data || error.message);
+      console.error('❌ Erro ao buscar token Sentinel Hub:');
+      console.error('   Status:', error.response?.status);
+      console.error('   Data:', error.response?.data);
+      console.error('   Message:', error.message);
       throw new Error('Não foi possível autenticar com o Sentinel Hub.');
     }
   }
