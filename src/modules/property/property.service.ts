@@ -2,6 +2,7 @@ import { db } from '../../config/firebase.config';
 import { PropertyModel, IProperty } from './property.model';
 import carApiService from '../../services/car-api.service';
 import auditService from '../audit/audit.service';
+import satelliteService from '../../services/satellite.service';
 
 class PropertyService {
   private collectionRef = db.collection('properties');
@@ -89,7 +90,13 @@ class PropertyService {
     });
 
     const updated = await docRef.get();
-    return new PropertyModel({ id: updated.id, ...updated.data() });
+    const propertyModel = new PropertyModel({ id: updated.id, ...updated.data() });
+
+    // Não bloqueante: Dispara a geração de imagem de satélite após a sincronização do CAR
+    satelliteService.getPropertyImage(propertyModel)
+      .catch(err => console.error(`Falha ao gerar imagem de satélite para a propriedade ${propertyId}:`, err));
+
+    return propertyModel;
   }
 
   async findAll(limit = 50): Promise<PropertyModel[]> {
