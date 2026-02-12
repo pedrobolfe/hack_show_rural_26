@@ -59,7 +59,8 @@ try {
     admin.initializeApp({
       credential,
       projectId: firebaseConfig.projectId,
-      storageBucket: firebaseConfig.storageBucket
+      storageBucket: firebaseConfig.storageBucket,
+      databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`
     });
   } else {
     // Modo desenvolvimento sem credenciais (usar emulador)
@@ -73,7 +74,15 @@ try {
     });
   }
 
+  // Inicializar serviços com configurações explícitas
   db = admin.firestore();
+  
+  // Configurações do Firestore para garantir conexão
+  const settings = {
+    ignoreUndefinedProperties: true,
+  };
+  db.settings(settings);
+  
   auth = admin.auth();
   storage = admin.storage();
 

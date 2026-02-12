@@ -3,6 +3,9 @@ import propertyController from './property.controller';
 
 const router = Router();
 
+// Rota para consultar dados do CAR (sem criar propriedade)
+router.get('/car/:carNumber', (req, res) => propertyController.consultCarData(req, res));
+
 router.post('/', (req, res) => propertyController.create(req, res));
 router.post('/:propertyId/sync-car', (req, res) => propertyController.syncCarData(req, res));
 router.get('/', (req, res) => propertyController.getAll(req, res));

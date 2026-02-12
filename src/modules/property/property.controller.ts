@@ -1,7 +1,46 @@
 import { Request, Response } from 'express';
 import propertyService from './property.service';
+import carApiService from '../../services/car-api.service';
 
 class PropertyController {
+  async consultCarData(req: Request, res: Response) {
+    try {
+      const { carNumber } = req.params;
+      
+      // Garante que carNumber é uma string
+      const carNumberStr = Array.isArray(carNumber) ? carNumber[0] : carNumber;
+      
+      // Valida o formato do CAR
+      const isValid = await carApiService.validateCarNumber(carNumberStr);
+      if (!isValid) {
+        return res.status(400).json({
+          success: false,
+          error: 'Número do CAR inválido. Formato esperado: BR-UF-MUNICIPIO-NUMERO'
+        });
+      }
+
+      // Busca os dados do CAR
+      const carData = await carApiService.fetchCarData(carNumberStr);
+      if (!carData) {
+        return res.status(404).json({
+          success: false,
+          error: 'Dados do CAR não encontrados'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: carData,
+        message: 'Dados do CAR consultados com sucesso'
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: (error as Error).message
+      });
+    }
+  }
+
   async create(req: Request, res: Response) {
     try {
       const property = await propertyService.create(req.body);

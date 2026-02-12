@@ -6,7 +6,7 @@ export interface IProducer {
   email: string;
   phone?: string;
   cooperativeId?: string;
-  userType: 'produtor' | 'cooperativa';
+  userType: 'produtor' | 'cooperativa' | 'auditor';
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -19,7 +19,7 @@ export class ProducerModel implements IProducer {
   email: string;
   phone?: string;
   cooperativeId?: string;
-  userType: 'produtor' | 'cooperativa';
+  userType: 'produtor' | 'cooperativa' | 'auditor';
   createdAt: Date;
   updatedAt?: Date;
 
@@ -56,9 +56,9 @@ export class ProducerModel implements IProducer {
       errors.push('Tipo de usuário é obrigatório');
     }
 
-    const validUserTypes: ('produtor' | 'cooperativa')[] = ['produtor', 'cooperativa'];
+    const validUserTypes: ('produtor' | 'cooperativa' | 'auditor')[] = ['produtor', 'cooperativa', 'auditor'];
     if (this.userType && !validUserTypes.includes(this.userType)) {
-      errors.push('Tipo de usuário deve ser "produtor" ou "cooperativa"');
+      errors.push('Tipo de usuário deve ser "produtor", "cooperativa" ou "auditor"');
     }
 
     if (this.userType === 'produtor' && !this.cooperativeId) {

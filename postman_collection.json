@@ -54,6 +54,29 @@
           "response": []
         },
         {
+          "name": "Criar Auditor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Maria Auditora\",\n  \"email\": \"maria.auditora@certificadora.com\",\n  \"phone\": \"4133445566\",\n  \"userType\": \"auditor\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Cria um auditor responsável por verificar e certificar créditos de carbono"
+          },
+          "response": []
+        },
+        {
           "name": "Listar Usuários",
           "request": {
             "method": "GET",
@@ -103,6 +126,27 @@
     {
       "name": "2. Properties",
       "item": [
+        {
+          "name": "Consultar CAR",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/car/:carNumber",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "car", ":carNumber"],
+              "variable": [
+                {
+                  "key": "carNumber",
+                  "value": "BR-PR-4104808-ABC123",
+                  "description": "Número do CAR no formato BR-UF-MUNICIPIO-NUMERO"
+                }
+              ]
+            },
+            "description": "Consulta dados do CAR sem criar propriedade. Retorna informações como área total, reserva legal, APP, localização, etc."
+          },
+          "response": []
+        },
         {
           "name": "Criar Propriedade",
           "request": {
