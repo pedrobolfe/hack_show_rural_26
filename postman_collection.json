@@ -1,0 +1,526 @@
+{
+  "info": {
+    "name": "EcoTrust Agropool API",
+    "description": "Carbon Registry System - Sistema de Certificação de Créditos de Carbono\n\n## Fluxo Completo:\n1. Criar Usuário (Produtor/Cooperativa)\n2. Criar Propriedade\n3. Sincronizar dados do CAR\n4. Criar Crédito de Carbono\n5. Ciclo de Certificação (Submit → Verify → Certify → Issue)\n6. Transferir/Aposentar\n7. Verificação Pública",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "ecotrust-agropool"
+  },
+  "item": [
+    {
+      "name": "1. Users",
+      "item": [
+        {
+          "name": "Criar Produtor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao.silva@example.com\",\n  \"phone\": \"41999887766\",\n  \"userType\": \"produtor\",\n  \"cooperativeId\": \"coop_001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Criar Cooperativa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cooperativa Agrícola Cascavel\",\n  \"email\": \"contato@coopcascavel.com.br\",\n  \"phone\": \"4133221100\",\n  \"userType\": \"cooperativa\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Usuários",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar por Tipo - Produtores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/type/produtor",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "type", "produtor"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Properties",
+      "item": [
+        {
+          "name": "Criar Propriedade",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ownerId\": \"USER_ID_DO_PRODUTOR\",\n  \"carData\": {\n    \"number\": \"BR-PR-4104808-ABC123\",\n    \"validated\": false\n  },\n  \"location\": {\n    \"city\": \"Cascavel\",\n    \"state\": \"PR\",\n    \"center\": {\n      \"lat\": -24.95,\n      \"lng\": -53.45\n    }\n  },\n  \"areaDetails\": {\n    \"total\": 50.5,\n    \"forest\": 16.7,\n    \"app\": 4.2,\n    \"productive\": 33.8\n  },\n  \"pooling\": {\n    \"isInCluster\": false\n  },\n  \"status\": \"Pending\",\n  \"region\": \"Sul\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/properties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sincronizar CAR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carNumber\": \"BR-PR-4104808-ABC123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/:propertyId/sync-car",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", ":propertyId", "sync-car"],
+              "variable": [
+                {
+                  "key": "propertyId",
+                  "value": "PROPERTY_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Propriedades",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Propriedades sem Cluster (Para Pooling)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/without-cluster",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "without-cluster"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Propriedades por Dono",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/owner/:ownerId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "owner", ":ownerId"],
+              "variable": [
+                {
+                  "key": "ownerId",
+                  "value": "USER_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/:propertyId/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", ":propertyId", "status"],
+              "variable": [
+                {
+                  "key": "propertyId",
+                  "value": "PROPERTY_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Carbon Credits - Lifecycle",
+      "item": [
+        {
+          "name": "1. Criar Rascunho (Draft)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clusterId\": \"cluster_001\",\n  \"propertyIds\": [\"prop_001\", \"prop_002\", \"prop_003\"],\n  \"carbonAmount\": 1500.75,\n  \"issuedBy\": \"operator_uid_123\",\n  \"certificate\": {\n    \"methodology\": \"VCS\",\n    \"vintage\": 2026,\n    \"projectType\": \"Reflorestamento\",\n    \"verifier\": \"TÜV SÜD Brasil\",\n    \"certificationDate\": \"2026-02-12T00:00:00.000Z\",\n    \"geographicScope\": \"BR-PR-Cascavel\",\n    \"additionalCertifications\": [\"ISO 14064\"]\n  },\n  \"bufferPercentage\": 20,\n  \"countryCode\": \"BR\",\n  \"region\": \"Sul\",\n  \"coordinates\": {\n    \"centerLat\": -24.95,\n    \"centerLng\": -53.45\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/credits",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Submeter para Verificação",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"submittedBy\": \"operator_uid_123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/credits/:creditId/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits", ":creditId", "submit"],
+              "variable": [
+                {
+                  "key": "creditId",
+                  "value": "CREDIT_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Verificar (Verificador)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verifiedBy\": \"verifier_uid_456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/credits/:creditId/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits", ":creditId", "verify"],
+              "variable": [
+                {
+                  "key": "creditId",
+                  "value": "CREDIT_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Certificar e Assinar (Supervisor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approvedBy\": \"supervisor_uid_789\",\n  \"privateKey\": \"-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...\\n-----END PRIVATE KEY-----\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/credits/:creditId/certify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits", ":creditId", "certify"],
+              "variable": [
+                {
+                  "key": "creditId",
+                  "value": "CREDIT_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Emitir Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/credits/:creditId/issue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits", ":creditId", "issue"],
+              "variable": [
+                {
+                  "key": "creditId",
+                  "value": "CREDIT_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Carbon Credits - Operations",
+      "item": [
+        {
+          "name": "Transferir Propriedade (Venda)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newOwnerId\": \"buyer_uid_999\",\n  \"price\": 75000.00,\n  \"currency\": \"BRL\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/credits/:creditId/transfer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits", ":creditId", "transfer"],
+              "variable": [
+                {
+                  "key": "creditId",
+                  "value": "CREDIT_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Aposentar Crédito (Retire)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"retiredBy\": \"owner_uid_888\",\n  \"reason\": \"Compensação de emissões de CO2 da empresa XYZ\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/credits/:creditId/retire",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits", ":creditId", "retire"],
+              "variable": [
+                {
+                  "key": "creditId",
+                  "value": "CREDIT_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Todos os Créditos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/credits",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/credits/:creditId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits", ":creditId"],
+              "variable": [
+                {
+                  "key": "creditId",
+                  "value": "CREDIT_ID_AQUI"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar por Status - Issued",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/credits/status/Issued",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits", "status", "Issued"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar por Status - Certified",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/credits/status/Certified",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits", "status", "Certified"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Public Verification",
+      "item": [
+        {
+          "name": "Verificar Certificado (API Pública)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/credits/verify/:tokenId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "credits", "verify", ":tokenId"],
+              "variable": [
+                {
+                  "key": "tokenId",
+                  "value": "TOKEN_ID_UUID_AQUI"
+                }
+              ]
+            },
+            "description": "API pública para verificação de autenticidade do certificado.\n\nQualquer pessoa pode usar este endpoint para validar se um crédito de carbono é legítimo."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": ["{{baseUrl}}"],
+          "path": [""]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
