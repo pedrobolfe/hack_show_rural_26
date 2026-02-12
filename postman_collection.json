@@ -269,6 +269,103 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "🛰️ Imagem com Polígono (Coordenadas)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordinates\": [\n    { \"lat\": -24.7460698, \"lon\": -53.5716251 },\n    { \"lat\": -24.7485137, \"lon\": -53.5709581 },\n    { \"lat\": -24.7482826, \"lon\": -53.5698980 },\n    { \"lat\": -24.7467285, \"lon\": -53.5703096 },\n    { \"lat\": -24.7458605, \"lon\": -53.5700000 },\n    { \"lat\": -24.7450145, \"lon\": -53.5670305 }\n  ],\n  \"dateFrom\": \"2024-01-01T00:00:00Z\",\n  \"dateTo\": \"2024-12-31T23:59:59Z\",\n  \"width\": 1024,\n  \"height\": 1024,\n  \"label\": \"Propriedade Teste\",\n  \"polygonColor\": \"#FF0000\",\n  \"fillOpacity\": 0.3,\n  \"returnPath\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/satellite/polygon",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "satellite", "polygon"]
+            },
+            "description": "Gera imagem de satélite com polígono desenhado a partir de array de coordenadas. Retorna a imagem diretamente ou o caminho (returnPath: true)"
+          },
+          "response": []
+        },
+        {
+          "name": "🛰️ Imagem com Polígono (JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyKey\": \"poligono_propriedade_1\",\n  \"dateFrom\": \"2024-01-01T00:00:00Z\",\n  \"dateTo\": \"2024-12-31T23:59:59Z\",\n  \"width\": 1024,\n  \"height\": 1024,\n  \"label\": \"Propriedade 1\",\n  \"polygonColor\": \"#FF0000\",\n  \"fillOpacity\": 0.3,\n  \"returnPath\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/satellite/polygon-json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "satellite", "polygon-json"]
+            },
+            "description": "Gera imagem de satélite com polígono a partir do arquivo coordenadas.json. Usa a chave propertyKey para buscar as coordenadas"
+          },
+          "response": []
+        },
+        {
+          "name": "🛰️ Imagem por BBOX",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/satellite/bbox?bbox=-53.5716,-24.7485,-53.5670,-24.7450&dateFrom=2024-01-01T00:00:00Z&dateTo=2024-12-31T23:59:59Z&label=Área Teste&width=1024&height=1024&returnPath=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "satellite", "bbox"],
+              "query": [
+                {
+                  "key": "bbox",
+                  "value": "-53.5716,-24.7485,-53.5670,-24.7450",
+                  "description": "Bounding box: [oeste,sul,leste,norte]"
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2024-01-01T00:00:00Z",
+                  "description": "Data inicial (opcional)"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2024-12-31T23:59:59Z",
+                  "description": "Data final (opcional)"
+                },
+                {
+                  "key": "label",
+                  "value": "Área Teste",
+                  "description": "Label na imagem (opcional)"
+                },
+                {
+                  "key": "width",
+                  "value": "1024",
+                  "description": "Largura em pixels (opcional)"
+                },
+                {
+                  "key": "height",
+                  "value": "1024",
+                  "description": "Altura em pixels (opcional)"
+                },
+                {
+                  "key": "returnPath",
+                  "value": "true",
+                  "description": "Retornar caminho JSON ou imagem direta"
+                }
+              ]
+            },
+            "description": "Obtém imagem de satélite destacada apenas com o bounding box. Mais simples que o polígono."
+          },
+          "response": []
         }
       ]
     },

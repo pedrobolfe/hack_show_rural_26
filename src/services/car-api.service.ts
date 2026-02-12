@@ -46,13 +46,6 @@ class CarApiService {
       return null;
     }
   }
-
-  async validateCarNumber(carNumber: string): Promise<boolean> {
-    // Validação básica do formato do CAR
-    // Formato: BR-UF-MUNICIPIO-NUMERO
-    const carRegex = /^BR-[A-Z]{2}-\d{7}-[A-Z0-9]+$/;
-    return carRegex.test(carNumber);
-  }
 }
 
 export default new CarApiService();

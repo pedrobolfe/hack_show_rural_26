@@ -4,8 +4,8 @@ export interface IUser {
   email: string;
   phone?: string;
   role: string;
-  userType: 'produtor' | 'cooperativa' | 'auditor';
-  numCRA?: string;
+  userType: 'produtor';
+  numCRA: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,8 +16,8 @@ export class UserModel implements IUser {
   email: string;
   phone?: string;
   role: string;
-  userType: 'produtor' | 'cooperativa' | 'auditor';
-  numCRA?: string;
+  userType: 'produtor';
+  numCRA: string;
   createdAt: Date;
   updatedAt: Date;
 
@@ -27,8 +27,8 @@ export class UserModel implements IUser {
     this.email = data.email!;
     this.phone = data.phone;
     this.role = data.role || 'user';
-    this.userType = data.userType!;
-    this.numCRA = data.numCRA;
+    this.userType = 'produtor';
+    this.numCRA = data.numCRA!;
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
   }
@@ -53,23 +53,13 @@ export class UserModel implements IUser {
       errors.push('Email inválido');
     }
 
-    if (!this.userType) {
-      errors.push('Tipo de usuário é obrigatório');
+    // CAR é obrigatório para produtor
+    if (!this.numCRA || this.numCRA.trim() === '') {
+      errors.push('Número do CAR é obrigatório');
     }
-
-    const validUserTypes: ('produtor' | 'cooperativa' | 'auditor')[] = ['produtor', 'cooperativa', 'auditor'];
-    if (this.userType && !validUserTypes.includes(this.userType)) {
-      errors.push('Tipo de usuário deve ser "produtor", "cooperativa" ou "auditor"');
-    }
-
-    if (this.userType === 'produtor') {
-      if (!this.numCRA || this.numCRA.trim() === '') {
-        errors.push('Número do CAR é obrigatório para produtores');
-      }
-      
-      if (this.numCRA && this.numCRA.length < 10) {
-        errors.push('Número do CAR deve ter no mínimo 10 caracteres');
-      }
+    
+    if (this.numCRA && this.numCRA.length < 10) {
+      errors.push('Número do CAR deve ter no mínimo 10 caracteres');
     }
 
     return {
@@ -79,39 +69,29 @@ export class UserModel implements IUser {
   }
 
   toFirestore(): Omit<IUser, 'id'> {
-    const data: any = {
+    return {
       name: this.name,
       email: this.email,
       phone: this.phone,
       role: this.role,
       userType: this.userType,
+      numCRA: this.numCRA,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     };
-
-    if (this.userType === 'produtor' && this.numCRA) {
-      data.numCRA = this.numCRA;
-    }
-
-    return data;
   }
 
   toJSON(): IUser {
-    const data: any = {
+    return {
       id: this.id,
       name: this.name,
       email: this.email,
       phone: this.phone,
       role: this.role,
       userType: this.userType,
+      numCRA: this.numCRA,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     };
-
-    if (this.userType === 'produtor' && this.numCRA) {
-      data.numCRA = this.numCRA;
-    }
-
-    return data;
   }
 }

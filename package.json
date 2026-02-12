@@ -18,12 +18,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/sharp": "^0.31.1",
     "@types/uuid": "^9.0.8",
     "axios": "^1.13.5",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
     "firebase": "^12.9.0",
     "firebase-admin": "^13.6.1",
+    "sharp": "^0.34.5",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

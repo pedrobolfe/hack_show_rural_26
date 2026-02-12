@@ -3,6 +3,23 @@ import propertyController from './property.controller';
 
 const router = Router();
 
+// ============================================================
+// ROTAS DE IMAGENS DE SATÉLITE (DEVEM VIR ANTES DAS ROTAS DINÂMICAS)
+// ============================================================
+
+// Obter imagem com polígono a partir de coordenadas
+router.post('/satellite/polygon', (req, res) => propertyController.getImageWithPolygon(req, res));
+
+// Obter imagem com polígono a partir do JSON
+router.post('/satellite/polygon-json', (req, res) => propertyController.getImageFromJsonFile(req, res));
+
+// Obter imagem por BBOX
+router.get('/satellite/bbox', (req, res) => propertyController.getImageByBbox(req, res));
+
+// ============================================================
+// ROTAS DE PROPRIEDADES
+// ============================================================
+
 // Rota para consultar dados do CAR (sem criar propriedade)
 router.get('/car/:carNumber', (req, res) => propertyController.consultCarData(req, res));
 

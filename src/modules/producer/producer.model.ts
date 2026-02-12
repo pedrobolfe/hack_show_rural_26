@@ -5,8 +5,7 @@ export interface IProducer {
   documentId_hash?: string;
   email: string;
   phone?: string;
-  cooperativeId?: string;
-  userType: 'produtor' | 'cooperativa' | 'auditor';
+  userType: 'produtor';
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -18,8 +17,7 @@ export class ProducerModel implements IProducer {
   documentId_hash?: string;
   email: string;
   phone?: string;
-  cooperativeId?: string;
-  userType: 'produtor' | 'cooperativa' | 'auditor';
+  userType: 'produtor';
   createdAt: Date;
   updatedAt?: Date;
 
@@ -30,8 +28,7 @@ export class ProducerModel implements IProducer {
     this.documentId_hash = data.documentId_hash;
     this.email = data.email!;
     this.phone = data.phone;
-    this.cooperativeId = data.cooperativeId;
-    this.userType = data.userType!;
+    this.userType = 'produtor';
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt;
   }
@@ -52,19 +49,6 @@ export class ProducerModel implements IProducer {
       errors.push('Email inválido');
     }
 
-    if (!this.userType) {
-      errors.push('Tipo de usuário é obrigatório');
-    }
-
-    const validUserTypes: ('produtor' | 'cooperativa' | 'auditor')[] = ['produtor', 'cooperativa', 'auditor'];
-    if (this.userType && !validUserTypes.includes(this.userType)) {
-      errors.push('Tipo de usuário deve ser "produtor", "cooperativa" ou "auditor"');
-    }
-
-    if (this.userType === 'produtor' && !this.cooperativeId) {
-      errors.push('Produtor deve estar vinculado a uma cooperativa');
-    }
-
     return {
       isValid: errors.length === 0,
       errors
@@ -82,7 +66,6 @@ export class ProducerModel implements IProducer {
     if (this.uid) data.uid = this.uid;
     if (this.documentId_hash) data.documentId_hash = this.documentId_hash;
     if (this.phone) data.phone = this.phone;
-    if (this.cooperativeId) data.cooperativeId = this.cooperativeId;
     if (this.updatedAt) data.updatedAt = this.updatedAt;
 
     return data;
@@ -95,7 +78,6 @@ export class ProducerModel implements IProducer {
       name: this.name,
       email: this.email,
       phone: this.phone,
-      cooperativeId: this.cooperativeId,
       userType: this.userType,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
