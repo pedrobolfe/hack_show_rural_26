@@ -125,19 +125,15 @@ export class HomeComponent implements OnInit {
 
     this.aiAnalysisService.generateFullInventory(userId, inputs).subscribe({
       next: (response) => {
-        console.log('✅ Relatório gerado com sucesso:', response.relatorioId);
         this.generatingReport.set(false);
 
-        // Recarregar dados do usuário atualizado
         const updatedUser = this.authService.currentUser();
         if (updatedUser) {
           this.user.set(updatedUser);
         }
 
-        // Recarregar lista de relatórios
         this.loadRelatorios();
 
-        // Mostrar mensagem de sucesso
         alert('✅ Relatório gerado com sucesso! Você pode baixá-lo abaixo.');
       },
       error: (error) => {

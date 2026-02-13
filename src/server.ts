@@ -13,7 +13,7 @@ import relatorioRoutes from './modules/relatorio/relatorio.routes';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -21,7 +21,10 @@ app.use(logger);
 
 app.use(passport.initialize());
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:4200', 'http://10.50.0.54:4200'],
+  credentials: true
+}));
 
 app.get('/', (_req: Request, res: Response) => {
   res.json({ 
@@ -60,8 +63,9 @@ app.use((_req: Request, res: Response) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`📡 http://localhost:${PORT}`);
+  console.log(`📱 http://10.50.0.54:${PORT}`);
 });
 
 export default app;

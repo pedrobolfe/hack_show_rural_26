@@ -84,17 +84,20 @@ export class RelatorioService {
           .replace(/₃/g, '3')
           .replace(/₄/g, '4')
           .replace(/═/g, '=')
+          .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Remove emojis
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, ''); // Remove diacríticos
-      };      const pageWidth = doc.internal.pageSize.getWidth();
+      };
+
+      const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 15;
+      const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
       let yPosition = margin;
 
       // Função auxiliar para adicionar nova página se necessário
       const checkPageBreak = (lineHeight: number) => {
-        if (yPosition + lineHeight > pageHeight - margin) {
+        if (yPosition + lineHeight > pageHeight - margin - 15) {
           doc.addPage();
           yPosition = margin;
           return true;
@@ -103,59 +106,112 @@ export class RelatorioService {
       };
 
       // Função para adicionar texto com quebra de linha
-      const addText = (text: string, fontSize: number, isBold: boolean = false, color: [number, number, number] = [0, 0, 0], align: 'left' | 'center' | 'right' = 'left') => {
+      const addText = (text: string, fontSize: number, isBold: boolean = false, color: [number, number, number] = [0, 0, 0], align: 'left' | 'center' | 'right' = 'left', indent: number = 0) => {
         doc.setFontSize(fontSize);
         doc.setTextColor(color[0], color[1], color[2]);
         doc.setFont('helvetica', isBold ? 'bold' : 'normal');
 
         const cleanedText = cleanText(text);
-        const lines = doc.splitTextToSize(cleanedText, contentWidth);
-        const lineHeight = fontSize * 0.5;
+        const lines = doc.splitTextToSize(cleanedText, contentWidth - indent);
+        const lineHeight = fontSize * 0.45;
 
         lines.forEach((line: string) => {
           checkPageBreak(lineHeight);
-          const xPos = align === 'center' ? pageWidth / 2 : (align === 'right' ? pageWidth - margin : margin);
+          const xPos = align === 'center' ? pageWidth / 2 : (align === 'right' ? pageWidth - margin : margin + indent);
           doc.text(line, xPos, yPosition, { align });
           yPosition += lineHeight;
         });
-      };      // Função para adicionar box colorido
-      const addColorBox = (text: string, bgColor: [number, number, number], textColor: [number, number, number] = [255, 255, 255]) => {
-        checkPageBreak(12);
-        doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
-        doc.rect(margin, yPosition - 4, contentWidth, 10, 'F');
-        doc.setFontSize(11);
+      };
+
+      // Função para adicionar seção com linha decorativa
+      const addSectionTitle = (text: string, color: [number, number, number] = [30, 122, 62]) => {
+        checkPageBreak(15);
+        yPosition += 5;
+
+        // Linha decorativa superior
+        doc.setDrawColor(color[0], color[1], color[2]);
+        doc.setLineWidth(0.5);
+        doc.line(margin, yPosition, pageWidth - margin, yPosition);
+
+        yPosition += 6;
+        doc.setFontSize(13);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-        doc.text(cleanText(text), margin + 3, yPosition + 2);
+        doc.setTextColor(color[0], color[1], color[2]);
+        doc.text(cleanText(text), margin, yPosition);
+
+        yPosition += 3;
+        // Linha decorativa inferior
+        doc.setLineWidth(0.3);
+        doc.line(margin, yPosition, pageWidth - margin, yPosition);
+
+        yPosition += 6;
         doc.setTextColor(0, 0, 0);
-        yPosition += 12;
+      };
+
+      // Função para adicionar card de informação
+      const addInfoCard = (label: string, value: string, bgColor: [number, number, number] = [245, 245, 245]) => {
+        checkPageBreak(18);
+
+        // Background do card
+        doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+        doc.roundedRect(margin, yPosition - 3, contentWidth, 12, 2, 2, 'F');
+
+        // Label
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(80, 80, 80);
+        doc.text(cleanText(label), margin + 3, yPosition + 1);
+
+        // Value
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(40, 40, 40);
+        const valueLines = doc.splitTextToSize(cleanText(value), contentWidth - 6);
+        doc.text(valueLines, margin + 3, yPosition + 6);
+
+        yPosition += 14;
       };
 
       // ===========================================
       // CABEÇALHO DO DOCUMENTO
       // ===========================================
-      doc.setFillColor(34, 139, 34); // Verde floresta
-      doc.rect(0, 0, pageWidth, 35, 'F');
+      // Cabeçalho com gradiente visual
+      doc.setFillColor(30, 122, 62); // Verde mais profissional
+      doc.rect(0, 0, pageWidth, 50, 'F');
 
-      doc.setFontSize(22);
+      // Adiciona um retângulo mais claro por cima para efeito visual
+      doc.setFillColor(34, 139, 69);
+      doc.rect(0, 0, pageWidth, 25, 'F');
+
+      // Título principal
+      doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(255, 255, 255);
-      doc.text(cleanText('INVENTARIO DE CARBONO'), pageWidth / 2, 15, { align: 'center' });
+      doc.text(cleanText('RELATORIO DE INVENTARIO'), pageWidth / 2, 13, { align: 'center' });
 
-      doc.setFontSize(12);
+      // Subtítulo
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
-      doc.text('Propriedade Rural', pageWidth / 2, 23, { align: 'center' });
-      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, 29, { align: 'center' });
+      doc.text(cleanText('Carbono e Gases de Efeito Estufa'), pageWidth / 2, 20, { align: 'center' });
 
-      yPosition = 45;      // ===========================================
+      // Informações da data e título
+      doc.setFontSize(9);
+      doc.setTextColor(240, 240, 240);
+      const dataGeracao = `Gerado em: ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+      doc.text(dataGeracao, pageWidth / 2, 35, { align: 'center' });
+
+      if (relatorio.title) {
+        doc.text(cleanText(`Propriedade: ${relatorio.title}`), pageWidth / 2, 42, { align: 'center' });
+      }
+
+      yPosition = 60;      // ===========================================
       // PROCESSAR CONTEÚDO
       // ===========================================
       const analiseImagem = relatorio.analise_imagem || '';
       const inventarioFinal = relatorio.comparacao_dados || relatorio.response || '';
 
       if (analiseImagem) {
-        addColorBox('ETAPA 1: ANALISE DA IMAGEM DE SATELITE', [70, 130, 180]);
-        yPosition += 3;
+        addSectionTitle('ANALISE DA IMAGEM DE SATELITE', [70, 130, 180]);
 
         const linhas = analiseImagem.split('\n');
         linhas.forEach(linha => {
@@ -164,12 +220,15 @@ export class RelatorioService {
             // Remove números de questão e formata
             const textoLimpo = linha.replace(/^\d+\.\s*/, '');
             if (textoLimpo.includes(':')) {
-              const [campo, valor] = textoLimpo.split(':');
-              addText(`• ${campo.trim()}:`, 9, true, [40, 40, 40]);
-              yPosition -= 2;
-              addText(`  ${valor.trim()}`, 9, false, [60, 60, 60]);
-            } else {
-              addText(textoLimpo, 9, false, [60, 60, 60]);
+              const partes = textoLimpo.split(':');
+              const campo = partes[0].trim();
+              const valor = partes.slice(1).join(':').trim();
+              if (valor) {
+                addInfoCard(campo, valor);
+              }
+            } else if (textoLimpo) {
+              addText(textoLimpo, 10, false, [60, 60, 60]);
+              yPosition += 2;
             }
           }
         });
@@ -178,44 +237,72 @@ export class RelatorioService {
         doc.addPage();
         yPosition = margin;
 
-        addColorBox('ETAPA 2: INVENTARIO COMPLETO DE CARBONO', [220, 20, 60]);
-        yPosition += 3;
+        addSectionTitle('INVENTARIO COMPLETO DE CARBONO', [220, 20, 60]);
 
         const linhas = inventarioFinal.split('\n');
+        let emLista = false;
 
         linhas.forEach(linha => {
           linha = linha.trim();
 
           // Ignorar linhas divisórias
-          if (linha.includes('═══') || linha.includes('===') || !linha) return;
+          if (linha.includes('═══') || linha.includes('===') || !linha) {
+            if (emLista) yPosition += 3;
+            emLista = false;
+            return;
+          }
 
-          // Remove emojis
+          // Remove emojis já foi feito no cleanText
           linha = linha.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
 
-          // Títulos de seções principais
-          if (linha.match(/^[A-ZÀÁÂÃÉÊÍÓÔÕÚÇ\s]+$/)) {
-            yPosition += 4;
-            addColorBox(linha, [60, 60, 60]);
+          // Títulos de seções principais (MAIÚSCULAS)
+          if (linha.match(/^[A-ZÀÁÂÃÉÊÍÓÔÕÚÇ\s]+$/) && linha.length > 5) {
+            yPosition += 6;
+            addSectionTitle(linha, [60, 60, 60]);
+            emLista = false;
             return;
           }
 
           // Itens com bullet
           if (linha.startsWith('•')) {
+            emLista = true;
             const texto = linha.substring(1).trim();
             if (texto.includes(':')) {
-              const [campo, valor] = texto.split(':');
-              addText(`• ${campo.trim()}:`, 9, true, [40, 40, 40]);
-              yPosition -= 2;
-              addText(`  ${valor.trim()}`, 9, false, [60, 60, 60]);
+              const partes = texto.split(':');
+              const campo = partes[0].trim();
+              const valor = partes.slice(1).join(':').trim();
+              if (valor) {
+                addInfoCard(campo, valor, [250, 250, 250]);
+              }
             } else {
-              addText(`• ${texto}`, 9, false, [60, 60, 60]);
+              checkPageBreak(8);
+              doc.setFontSize(10);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(60, 60, 60);
+              doc.text(cleanText(`• ${texto}`), margin + 3, yPosition);
+              yPosition += 6;
             }
             return;
           }
 
-          // Texto normal
+          // Texto normal com formatação
           if (linha) {
-            addText(linha, 9, false, [50, 50, 50]);
+            if (linha.includes(':') && !linha.startsWith('-')) {
+              const partes = linha.split(':');
+              const campo = partes[0].trim();
+              const valor = partes.slice(1).join(':').trim();
+              if (valor && campo.length < 60) {
+                addInfoCard(campo, valor, [248, 248, 248]);
+                emLista = false;
+              } else {
+                addText(linha, 10, false, [50, 50, 50]);
+                yPosition += 3;
+              }
+            } else {
+              addText(linha, 10, false, [50, 50, 50]);
+              yPosition += 3;
+              emLista = false;
+            }
           }
         });
       }
@@ -226,13 +313,29 @@ export class RelatorioService {
       const totalPages = doc.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
+
+        // Linha decorativa superior do rodapé
+        doc.setDrawColor(30, 122, 62);
+        doc.setLineWidth(0.5);
+        doc.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18);
+
+        // Texto do rodapé
         doc.setFontSize(8);
-        doc.setTextColor(128, 128, 128);
+        doc.setTextColor(100, 100, 100);
         doc.setFont('helvetica', 'normal');
         doc.text(
-          cleanText(`Pagina ${i} de ${totalPages} | Sistema: Inventario de Propriedades Rurais v2.0 | Metodologia: IPCC 2006 + GHG Protocol`),
+          cleanText('Sistema ARES - Inventario de Propriedades Rurais'),
           pageWidth / 2,
-          pageHeight - 10,
+          pageHeight - 13,
+          { align: 'center' }
+        );
+
+        doc.setFontSize(7);
+        doc.setTextColor(120, 120, 120);
+        doc.text(
+          cleanText(`Metodologia: IPCC 2006 + GHG Protocol | Pagina ${i} de ${totalPages}`),
+          pageWidth / 2,
+          pageHeight - 9,
           { align: 'center' }
         );
       }
@@ -240,7 +343,7 @@ export class RelatorioService {
       // ===========================================
       // SALVAR PDF
       // ===========================================
-      const fileName = `inventario_carbono_${relatorio.title || 'relatorio'}_${new Date().getTime()}.pdf`;
+      const fileName = `relatorio_inventario_${relatorio.title?.replace(/\s+/g, '_') || 'propriedade'}_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
 
       console.log('✅ PDF gerado com sucesso:', fileName);

@@ -1,6 +1,6 @@
 {
   "name": "hack_show_rural_26",
-  "version": "1.0.0",
+  "version": "1.4.0",
   "description": "API Modular para Hack Show Rural 2026",
   "main": "dist/server.js",
   "scripts": {
