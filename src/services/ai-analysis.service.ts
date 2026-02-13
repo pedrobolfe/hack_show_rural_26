@@ -112,55 +112,61 @@ Analise a imagem de satélite fornecida considerando estes dados.
     async generateReport(customPrompt: string, inputs: AnalysisInput): Promise<string> {
         const analysis = await this.analyzeImageWithCustomPrompt(customPrompt, inputs);
 
-        const report = `
+        const report = `# 📋 RELATÓRIO DE ANÁLISE - INVENTÁRIO GEE
+
 ---
-Você é um especialista em inventário de gases de efeito estufa (GEE), com base nas metodologias do IPCC (2006 Guidelines for National Greenhouse Gas Inventories e atualizações), GHG Protocol e boas práticas internacionais de MRV (Measurement, Reporting and Verification).
 
-Sua tarefa é analisar uma propriedade rural previamente demarcada (coordenadas geográficas já fornecidas) e gerar uma análise técnica preliminar de emissões e remoções de GEE.
+## 🖼️ Informações da Análise
+- **Data da Análise:** ${new Date(analysis.timestamp).toLocaleString('pt-BR')}
+- **Imagem Analisada:** ${analysis.imagem_analisada}
 
-Objetivo:
+---
+
+## 📊 Dados da Propriedade
+
+### Área Total
+**${analysis.entradas_fornecidas.areaTotal} hectares**
+
+### Uso do Solo Atual
+**${analysis.entradas_fornecidas.usoSoloAtual}**
+
+### Coordenadas do Polígono
+\`\`\`json
+${JSON.stringify(analysis.entradas_fornecidas.coordenadas, null, 2)}
+\`\`\`
+
+${analysis.entradas_fornecidas.historicoUso ? `### Histórico de Uso\n${analysis.entradas_fornecidas.historicoUso}\n` : ''}
+${analysis.entradas_fornecidas.dadosAdicionais ? `### Dados Adicionais\n${analysis.entradas_fornecidas.dadosAdicionais}\n` : ''}
+
+---
+
+## 📝 Metodologia
+
+Análise baseada em:
+- **IPCC** (2006 Guidelines for National Greenhouse Gas Inventories e atualizações)
+- **GHG Protocol**
+- **Boas práticas internacionais de MRV** (Measurement, Reporting and Verification)
+
+### Objetivo
 Realizar uma avaliação inicial do potencial de emissões e sequestro de carbono da área com base nas informações fornecidas.
 
-Entrada:
-- Área total da propriedade (hectares)
-- Coordenadas do polígono demarcado
-- Uso do solo atual (ex: pastagem, floresta nativa, agricultura, área degradada, etc.)
-- Histórico de uso (se disponível)
-- Dados adicionais fornecidos
+---
 
-Instruções:
+## 🤖 Análise da IA
 
-1. Classifique o tipo de uso e cobertura do solo.
-2. Identifique possíveis fontes de emissão:
-   - Mudança de uso da terra (LULUCF)
-   - Queima de biomassa
-   - Pecuária (fermentação entérica, manejo de dejetos)
-   - Uso de fertilizantes nitrogenados
-   - Degradação do solo
-3. Identifique possíveis sumidouros:
-   - Floresta nativa
-   - Sistemas agroflorestais
-   - Regeneração natural
-   - Solo com aumento de matéria orgânica
-4. Explique quais categorias do IPCC seriam aplicáveis.
-5. Indique quais dados adicionais seriam necessários para um inventário completo.
-6. Apresente incertezas da análise.
-7. Não invente dados numéricos se não forem fornecidos.
-8. Caso informações sejam insuficientes, indique claramente as limitações.
+${analysis.resposta_completa}
 
-Formato da resposta:
+---
 
-- Resumo executivo
-- Classificação do uso do solo
-- Potenciais fontes de emissão
-- Potenciais sumidouros
-- Categorias IPCC aplicáveis
-- Dados adicionais necessários
-- Limitações e incertezas
-- Conclusão técnica preliminar
+## 📊 Metadados Técnicos
+- **Modelo IA:** Google Gemini 1.5 Flash
+- **Timestamp:** ${analysis.timestamp}
+- **Tamanho da Resposta:** ${analysis.resposta_completa.length} caracteres
+- **Prompt Utilizado:** ${analysis.prompt_utilizado.substring(0, 100)}...
 
-A análise deve ser técnica, objetiva e baseada em boas práticas internacionais.
+---
 
+*Relatório gerado automaticamente pelo Sistema de Inventário de Propriedades Rurais*
 `;
 
         return report;

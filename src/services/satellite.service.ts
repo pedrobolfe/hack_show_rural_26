@@ -441,7 +441,7 @@ class SatelliteService {
     async getImageByBbox(
         bbox: number[],
         date?: string,
-        options: { label?: string } = {}
+        _options: { label?: string } = {}
     ): Promise<string> {
         if (!bbox || bbox.length !== 4) {
             throw new Error('BBOX invalido. Formato: [oeste, sul, leste, norte]');
