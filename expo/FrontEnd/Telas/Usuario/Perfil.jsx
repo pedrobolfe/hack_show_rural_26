@@ -9,7 +9,8 @@ import {
   StatusBar,
   TextInput,
   Image,
-  Alertorm
+  Alert,
+  Platform
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { getUserByEmail } from '../../../apirequest'; // Importa a função da API
@@ -213,7 +214,9 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     backgroundColor: '#FFFFFF',
     ...Platform.select({
-      ,
+      web: {
+        boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+      },
       android: {
         elevation: 2,
       },
@@ -266,7 +269,9 @@ const styles = StyleSheet.create({
     ...Platform.select({
       web: {
         boxShadow: '0px 10px 15px rgba(0, 0, 0, 0.1)',
-       elevation: 5,
+      },
+      android: {
+        elevation: 5,
       },
     }),
   },
@@ -287,6 +292,8 @@ const styles = StyleSheet.create({
         boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
       },
       android: {
+        elevation: 2,
+      },
     }),
   },
   userName: {
@@ -350,7 +357,7 @@ const styles = StyleSheet.create({
       android: {
         elevation: 8,
       },
-  },
+    }),
   changePasswordText: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 16,
