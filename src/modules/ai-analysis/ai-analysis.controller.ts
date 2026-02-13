@@ -37,7 +37,6 @@ class AIAnalysisController {
                 return;
             }
 
-            // Se inputs não for fornecido, usar valores padrão
             const defaultInputs = {
                 areaTotal: 100,
                 coordenadas: [[-53.6, -24.78], [-53.55, -24.78], [-53.55, -24.73], [-53.6, -24.73], [-53.6, -24.78]],
@@ -230,6 +229,53 @@ class AIAnalysisController {
             console.error('❌ Erro ao salvar relatório:', error.message);
             res.status(500).json({
                 error: 'Erro ao salvar relatório',
+                detalhes: error.message
+            });
+        }
+    }
+
+    /**
+     * POST /api/ai/inventory
+     * Fluxo completo: Análise de imagem + Perguntas do produtor → Inventário de Carbono
+     * Body: {
+     *   "userId": "id_do_usuario" // obrigatório
+     * }
+     */
+    async generateInventory(req: Request, res: Response): Promise<void> {
+        try {
+            const { userId } = req.body;
+
+            if (!userId || typeof userId !== 'string') {
+                res.status(400).json({
+                    error: 'Campo "userId" é obrigatório e deve ser uma string',
+                    exemplo: {
+                        userId: 'abc123'
+                    }
+                });
+                return;
+            }
+
+            const defaultInputs = {
+                areaTotal: 100,
+                coordenadas: [[-53.6, -24.78], [-53.55, -24.78], [-53.55, -24.73], [-53.6, -24.73], [-53.6, -24.78]] as Array<[number, number]>,
+                usoSoloAtual: 'não especificado',
+            };
+
+            console.log('🚀 Iniciando fluxo completo de inventário para usuário:', userId);
+            const result = await aiAnalysisService.generateFullInventory('', defaultInputs, userId);
+
+            res.status(200).json({
+                success: true,
+                relatorioId: result.relatorioId,
+                etapa1_analise_imagem: result.etapa1_analise_imagem,
+                inventario_final: result.etapa2_inventario_final,
+                timestamp: result.timestamp,
+                mensagem: 'Inventário de carbono gerado e salvo com sucesso'
+            });
+        } catch (error: any) {
+            console.error('❌ Erro ao gerar inventário:', error.message);
+            res.status(500).json({
+                error: 'Erro ao gerar inventário de carbono',
                 detalhes: error.message
             });
         }
