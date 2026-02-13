@@ -22,7 +22,7 @@ app.use(logger);
 app.use(passport.initialize());
 
 app.use(cors({
-  origin: ['http://localhost:4200', 'http://10.50.0.54:4200'],
+  origin: ['http://localhost:4200', 'https://front-end-show-rural26.vercel.app/'],
   credentials: true
 }));
 
