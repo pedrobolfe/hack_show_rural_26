@@ -1,3 +1,5 @@
+import { IQuestionAndResponse } from "../producer/producer.model";
+
 export interface IUser {
   id?: string;
   name: string;
@@ -8,6 +10,7 @@ export interface IUser {
   numCRA: string;
   createdAt: Date;
   updatedAt: Date;
+  questionsAndResponses?: Array<IQuestionAndResponse>;
 }
 
 export class UserModel implements IUser {
@@ -20,6 +23,8 @@ export class UserModel implements IUser {
   numCRA: string;
   createdAt: Date;
   updatedAt: Date;
+  questionsAndResponses?: Array<IQuestionAndResponse>;
+  
 
   constructor(data: Partial<IUser>) {
     this.id = data.id;
@@ -31,6 +36,7 @@ export class UserModel implements IUser {
     this.numCRA = data.numCRA!;
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
+    this.questionsAndResponses = data.questionsAndResponses || [];
   }
 
   validate(): { isValid: boolean; errors: string[] } {

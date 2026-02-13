@@ -8,6 +8,12 @@ export interface IProducer {
   userType: 'produtor';
   createdAt: Date;
   updatedAt?: Date;
+  questionsAndResponses?: Array<IQuestionAndResponse>;
+}
+
+export interface IQuestionAndResponse {
+  question: string;
+  response: string;
 }
 
 export class ProducerModel implements IProducer {
@@ -20,6 +26,7 @@ export class ProducerModel implements IProducer {
   userType: 'produtor';
   createdAt: Date;
   updatedAt?: Date;
+  questionsAndResponses?: Array<IQuestionAndResponse>;
 
   constructor(data: Partial<IProducer>) {
     this.id = data.id;
@@ -31,6 +38,7 @@ export class ProducerModel implements IProducer {
     this.userType = 'produtor';
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt;
+    this.questionsAndResponses = data.questionsAndResponses || [];
   }
 
   validate(): { isValid: boolean; errors: string[] } {
@@ -67,6 +75,7 @@ export class ProducerModel implements IProducer {
     if (this.documentId_hash) data.documentId_hash = this.documentId_hash;
     if (this.phone) data.phone = this.phone;
     if (this.updatedAt) data.updatedAt = this.updatedAt;
+    if (this.questionsAndResponses) data.questionsAndResponses = this.questionsAndResponses;
 
     return data;
   }
@@ -80,7 +89,8 @@ export class ProducerModel implements IProducer {
       phone: this.phone,
       userType: this.userType,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
+      questionsAndResponses: this.questionsAndResponses
     };
   }
 }
