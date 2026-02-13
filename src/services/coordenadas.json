@@ -1,5 +1,6 @@
 {
     "poligono_propriedade_1" : {
+        "area": "5,9",
         "centroide": [-24.74626, -53.56975],
         "pos1" :{
             "lat" : -24.7460698,

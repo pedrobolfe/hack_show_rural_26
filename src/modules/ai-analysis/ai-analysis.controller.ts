@@ -37,42 +37,54 @@ class AIAnalysisController {
                 return;
             }
 
-            if (!inputs || typeof inputs !== 'object') {
-                res.status(400).json({
-                    error: 'Campo "inputs" é obrigatório e deve ser um objeto',
-                    exemplo: {
-                        areaTotal: 100,
-                        coordenadas: [[-53.6, -24.78], [-53.55, -24.78]],
-                        usoSoloAtual: 'pastagem'
-                    }
-                });
-                return;
-            }
+            // Se inputs não for fornecido, usar valores padrão
+            const defaultInputs = {
+                areaTotal: 100,
+                coordenadas: [[-53.6, -24.78], [-53.55, -24.78], [-53.55, -24.73], [-53.6, -24.73], [-53.6, -24.78]],
+                dataPlantio: 'Não informado',
+                dataColheita: 'Não informado',
+                classeTextural: 'Não informado',
+                teorArgila: 0,
+                usoAnterior: 'Não informado',
+                sistemaCultivo: 'Não informado',
+                tempoAdocao: 0,
+                areaQueima: 0,
+                areaManejoOrganico: 0,
+                areaCultivada: 100,
+                produtividadeMedia: 0,
+                usoSoloAtual: 'não especificado',
+                historicoUso: 'Não informado',
+                dadosAdicionais: 'Análise baseada apenas na imagem de satélite'
+            };
 
-            // Validar campos obrigatórios do inputs
-            if (!inputs.areaTotal || typeof inputs.areaTotal !== 'number') {
-                res.status(400).json({
-                    error: 'Campo "inputs.areaTotal" é obrigatório e deve ser um número (hectares)'
-                });
-                return;
-            }
+            const analysisInputs = inputs || defaultInputs;
 
-            if (!Array.isArray(inputs.coordenadas) || inputs.coordenadas.length < 3) {
-                res.status(400).json({
-                    error: 'Campo "inputs.coordenadas" é obrigatório e deve ser um array com pelo menos 3 pontos'
-                });
-                return;
-            }
+            // Validar apenas se inputs foi fornecido
+            if (inputs) {
+                if (!inputs.areaTotal || typeof inputs.areaTotal !== 'number') {
+                    res.status(400).json({
+                        error: 'Campo "inputs.areaTotal" é obrigatório e deve ser um número (hectares)'
+                    });
+                    return;
+                }
 
-            if (!inputs.usoSoloAtual || typeof inputs.usoSoloAtual !== 'string') {
-                res.status(400).json({
-                    error: 'Campo "inputs.usoSoloAtual" é obrigatório e deve ser uma string'
-                });
-                return;
+                if (!Array.isArray(inputs.coordenadas) || inputs.coordenadas.length < 3) {
+                    res.status(400).json({
+                        error: 'Campo "inputs.coordenadas" é obrigatório e deve ser um array com pelo menos 3 pontos'
+                    });
+                    return;
+                }
+
+                if (!inputs.usoSoloAtual || typeof inputs.usoSoloAtual !== 'string') {
+                    res.status(400).json({
+                        error: 'Campo "inputs.usoSoloAtual" é obrigatório e deve ser uma string'
+                    });
+                    return;
+                }
             }
 
             console.log('🔍 Iniciando análise de imagem...');
-            const result = await aiAnalysisService.analyzeImageWithCustomPrompt(prompt, inputs);
+            const result = await aiAnalysisService.analyzeImageWithCustomPrompt(prompt, analysisInputs);
 
             res.status(200).json({
                 success: true,
@@ -93,7 +105,7 @@ class AIAnalysisController {
      * Gera um relatório completo em Markdown
      * Body: { 
      *   "prompt": "seu prompt aqui",
-     *   "inputs": { ... }
+     *   "inputs": { ... } // opcional
      * }
      */
     async generateReport(req: Request, res: Response): Promise<void> {
@@ -107,15 +119,30 @@ class AIAnalysisController {
                 return;
             }
 
-            if (!inputs || typeof inputs !== 'object') {
-                res.status(400).json({
-                    error: 'Campo "inputs" é obrigatório'
-                });
-                return;
-            }
+            // Valores padrão para inputs
+            const defaultInputs = {
+                areaTotal: 100,
+                coordenadas: [[-53.6, -24.78], [-53.55, -24.78], [-53.55, -24.73], [-53.6, -24.73], [-53.6, -24.78]],
+                dataPlantio: 'Não informado',
+                dataColheita: 'Não informado',
+                classeTextural: 'Não informado',
+                teorArgila: 0,
+                usoAnterior: 'Não informado',
+                sistemaCultivo: 'Não informado',
+                tempoAdocao: 0,
+                areaQueima: 0,
+                areaManejoOrganico: 0,
+                areaCultivada: 100,
+                produtividadeMedia: 0,
+                usoSoloAtual: 'não especificado',
+                historicoUso: 'Não informado',
+                dadosAdicionais: 'Análise baseada apenas na imagem de satélite'
+            };
+
+            const analysisInputs = inputs || defaultInputs;
 
             console.log('📄 Gerando relatório...');
-            const report = await aiAnalysisService.generateReport(prompt, inputs);
+            const report = await aiAnalysisService.generateReport(prompt, analysisInputs);
 
             res.status(200).json({
                 success: true,
@@ -136,7 +163,7 @@ class AIAnalysisController {
      * Salva o relatório em arquivo .md
      * Body: { 
      *   "prompt": "seu prompt aqui",
-     *   "inputs": { ... }
+     *   "inputs": { ... } // opcional
      * }
      */
     async saveReport(req: Request, res: Response): Promise<void> {
@@ -150,15 +177,30 @@ class AIAnalysisController {
                 return;
             }
 
-            if (!inputs || typeof inputs !== 'object') {
-                res.status(400).json({
-                    error: 'Campo "inputs" é obrigatório'
-                });
-                return;
-            }
+            // Valores padrão para inputs
+            const defaultInputs = {
+                areaTotal: 100,
+                coordenadas: [[-53.6, -24.78], [-53.55, -24.78], [-53.55, -24.73], [-53.6, -24.73], [-53.6, -24.78]],
+                dataPlantio: 'Não informado',
+                dataColheita: 'Não informado',
+                classeTextural: 'Não informado',
+                teorArgila: 0,
+                usoAnterior: 'Não informado',
+                sistemaCultivo: 'Não informado',
+                tempoAdocao: 0,
+                areaQueima: 0,
+                areaManejoOrganico: 0,
+                areaCultivada: 100,
+                produtividadeMedia: 0,
+                usoSoloAtual: 'não especificado',
+                historicoUso: 'Não informado',
+                dadosAdicionais: 'Análise baseada apenas na imagem de satélite'
+            };
+
+            const analysisInputs = inputs || defaultInputs;
 
             console.log('💾 Salvando relatório...');
-            const { reportPath, analysis } = await aiAnalysisService.saveReport(prompt, inputs);
+            const { reportPath, analysis } = await aiAnalysisService.saveReport(prompt, analysisInputs);
 
             res.status(200).json({
                 success: true,

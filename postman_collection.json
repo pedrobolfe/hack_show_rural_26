@@ -505,7 +505,7 @@
       "name": "AI Analysis",
       "item": [
         {
-          "name": "Analisar Imagem com IA",
+          "name": "Analisar Imagem com IA (Completo)",
           "request": {
             "method": "POST",
             "header": [
@@ -523,12 +523,35 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "ai", "analyze"]
             },
-            "description": "Analisa a imagem src/assets/image.png com prompt personalizado e dados da propriedade"
+            "description": "Analisa a imagem src/assets/image.png com prompt personalizado e dados completos da propriedade"
           },
           "response": []
         },
         {
-          "name": "Gerar Relatório em Markdown",
+          "name": "Analisar Imagem com IA (Simples - só prompt)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Analise esta imagem de satélite e identifique as principais características do uso do solo.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/analyze",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "analyze"]
+            },
+            "description": "Versão simplificada - apenas com prompt. Os dados da propriedade serão valores padrão."
+          },
+          "response": []
+        },
+        {
+          "name": "Gerar Relatório em Markdown (Completo)",
           "request": {
             "method": "POST",
             "header": [
@@ -546,12 +569,35 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "ai", "report"]
             },
-            "description": "Gera relatório em formato Markdown da análise com dados da propriedade"
+            "description": "Gera relatório em formato Markdown da análise com dados completos da propriedade"
           },
           "response": []
         },
         {
-          "name": "Salvar Relatório em Arquivo",
+          "name": "Gerar Relatório em Markdown (Simples - só prompt)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Crie um relatório técnico sobre a propriedade rural analisada.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "report"]
+            },
+            "description": "Versão simplificada - apenas com prompt"
+          },
+          "response": []
+        },
+        {
+          "name": "Salvar Relatório em Arquivo (Completo)",
           "request": {
             "method": "POST",
             "header": [
@@ -570,6 +616,29 @@
               "path": ["api", "ai", "save-report"]
             },
             "description": "Salva o relatório gerado em arquivo .md na pasta reports/ com dados completos da propriedade"
+          },
+          "response": []
+        },
+        {
+          "name": "Salvar Relatório em Arquivo (Simples - só prompt)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Gere e salve um relatório completo de inventário de GEE desta propriedade.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/save-report",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "save-report"]
+            },
+            "description": "Versão simplificada - apenas com prompt. Salva relatório com valores padrão."
           },
           "response": []
         }
