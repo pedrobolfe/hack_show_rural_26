@@ -2,7 +2,6 @@ import { db } from '../../config/firebase.config';
 import { PropertyModel, IProperty } from './property.model';
 import carApiService from '../../services/car-api.service';
 import auditService from '../audit/audit.service';
-import satelliteService from '../../services/satellite.service';
 
 class PropertyService {
   private collectionRef = db.collection('properties');
@@ -34,8 +33,7 @@ class PropertyService {
   }
 
   async syncCarData(propertyId: string, carNumber: string): Promise<PropertyModel> {
-    const isValid = await carApiService.validateCarNumber(carNumber);
-    if (!isValid) {
+    if (!carNumber || carNumber.trim().length === 0) {
       throw new Error('Número do CAR inválido');
     }
 
@@ -92,9 +90,8 @@ class PropertyService {
     const updated = await docRef.get();
     const propertyModel = new PropertyModel({ id: updated.id, ...updated.data() });
 
-    // Não bloqueante: Dispara a geração de imagem de satélite após a sincronização do CAR
-    satelliteService.getPropertyImage(propertyModel)
-      .catch(err => console.error(`Falha ao gerar imagem de satélite para a propriedade ${propertyId}:`, err));
+    // Nota: imagens de satélite são obtidas sob demanda via rotas /satellite/*
+    console.log(`✅ Dados do CAR sincronizados para propriedade ${propertyId}`);
 
     return propertyModel;
   }

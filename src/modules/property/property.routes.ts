@@ -7,6 +7,12 @@ const router = Router();
 // ROTAS DE IMAGENS DE SATÉLITE (DEVEM VIR ANTES DAS ROTAS DINÂMICAS)
 // ============================================================
 
+// Obter token OAuth2 do Sentinel Hub
+router.post('/satellite/token', (req, res) => propertyController.getSentinelToken(req, res));
+
+// Obter URL da imagem com coordenadas (sem baixar)
+router.post('/satellite/image-url', (req, res) => propertyController.getImageUrlWithCoordinates(req, res));
+
 // Obter imagem com polígono a partir de coordenadas
 router.post('/satellite/polygon', (req, res) => propertyController.getImageWithPolygon(req, res));
 
