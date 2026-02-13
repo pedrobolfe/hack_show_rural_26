@@ -4,6 +4,7 @@ import { logger } from './middlewares/logger';
 import userRoutes from './modules/user/user.routes';
 import propertyRoutes from './modules/property/property.routes';
 import aiAnalysisRoutes from './modules/ai-analysis/ai-analysis.routes';
+import relatorioRoutes from './modules/relatorio/relatorio.routes';
 
 dotenv.config();
 
@@ -24,7 +25,8 @@ app.get('/', (_req: Request, res: Response) => {
       users: '/api/users',
       properties: '/api/properties',
       satellite: '/api/properties/satellite/*',
-      ai_analysis: '/api/ai/*'
+      ai_analysis: '/api/ai/*',
+      relatorios: '/api/relatorios/*'
     }
   });
 });
@@ -32,6 +34,7 @@ app.get('/', (_req: Request, res: Response) => {
 app.use('/api/users', userRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/ai', aiAnalysisRoutes);
+app.use('/api/relatorios', relatorioRoutes);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);

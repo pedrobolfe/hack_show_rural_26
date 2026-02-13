@@ -102,19 +102,27 @@ class AIAnalysisController {
 
     /**
      * POST /api/ai/report
-     * Gera um relatório completo em Markdown
+     * Gera um relatório completo em Markdown e salva no banco
      * Body: { 
      *   "prompt": "seu prompt aqui",
-     *   "inputs": { ... } // opcional
+     *   "inputs": { ... }, // opcional
+     *   "userId": "id_do_usuario" // obrigatório
      * }
      */
     async generateReport(req: Request, res: Response): Promise<void> {
         try {
-            const { prompt, inputs } = req.body;
+            const { prompt, inputs, userId } = req.body;
 
             if (!prompt || typeof prompt !== 'string') {
                 res.status(400).json({
                     error: 'Campo "prompt" é obrigatório e deve ser uma string'
+                });
+                return;
+            }
+
+            if (!userId || typeof userId !== 'string') {
+                res.status(400).json({
+                    error: 'Campo "userId" é obrigatório e deve ser uma string'
                 });
                 return;
             }
@@ -142,12 +150,13 @@ class AIAnalysisController {
             const analysisInputs = inputs || defaultInputs;
 
             console.log('📄 Gerando relatório...');
-            const report = await aiAnalysisService.generateReport(prompt, analysisInputs);
+            const { report, relatorioId } = await aiAnalysisService.generateReport(prompt, analysisInputs, userId);
 
             res.status(200).json({
                 success: true,
+                relatorioId,
                 relatorio: report,
-                mensagem: 'Relatório gerado com sucesso'
+                mensagem: 'Relatório gerado e salvo com sucesso'
             });
         } catch (error: any) {
             console.error('❌ Erro ao gerar relatório:', error.message);
@@ -160,19 +169,27 @@ class AIAnalysisController {
 
     /**
      * POST /api/ai/save-report
-     * Salva o relatório em arquivo .md
+     * Salva o relatório em arquivo .md e no banco de dados
      * Body: { 
      *   "prompt": "seu prompt aqui",
-     *   "inputs": { ... } // opcional
+     *   "inputs": { ... }, // opcional
+     *   "userId": "id_do_usuario" // obrigatório
      * }
      */
     async saveReport(req: Request, res: Response): Promise<void> {
         try {
-            const { prompt, inputs } = req.body;
+            const { prompt, inputs, userId } = req.body;
 
             if (!prompt || typeof prompt !== 'string') {
                 res.status(400).json({
                     error: 'Campo "prompt" é obrigatório e deve ser uma string'
+                });
+                return;
+            }
+
+            if (!userId || typeof userId !== 'string') {
+                res.status(400).json({
+                    error: 'Campo "userId" é obrigatório e deve ser uma string'
                 });
                 return;
             }
@@ -200,10 +217,11 @@ class AIAnalysisController {
             const analysisInputs = inputs || defaultInputs;
 
             console.log('💾 Salvando relatório...');
-            const { reportPath, analysis } = await aiAnalysisService.saveReport(prompt, analysisInputs);
+            const { reportPath, analysis, relatorioId } = await aiAnalysisService.saveReport(prompt, analysisInputs, userId);
 
             res.status(200).json({
                 success: true,
+                relatorioId,
                 arquivo_salvo: reportPath,
                 data: analysis,
                 mensagem: 'Relatório salvo com sucesso'

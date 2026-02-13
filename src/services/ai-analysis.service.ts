@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import RelatorioModel from '../modules/relatorio/relatorio.model';
 
 interface CoordenadasData {
     [key: string]: {
@@ -175,9 +176,9 @@ Para cada item:
     }
 
     /**
-     * Gera um relatório formatado a partir da análise
+     * Gera um relatório formatado a partir da análise e salva no banco
      */
-    async generateReport(customPrompt: string, inputs: AnalysisInput): Promise<string> {
+    async generateReport(customPrompt: string, inputs: AnalysisInput, userId: string): Promise<{ report: string; relatorioId: string }> {
         const analysis = await this.analyzeImageWithCustomPrompt(customPrompt, inputs);
 
         const report = `## Análise
@@ -187,10 +188,13 @@ Para cada item:
 *Relatório gerado automaticamente pelo Sistema de Inventário de Propriedades Rurais*
 `;
 
-        return report;
+        // Salvar relatório no banco de dados
+        const relatorioId = await RelatorioModel.create(userId, analysis.resposta_completa);
+
+        return { report, relatorioId };
     }
 
-    async saveReport(customPrompt: string, inputs: AnalysisInput): Promise<{ reportPath: string; analysis: AnalysisResult }> {
+    async saveReport(customPrompt: string, inputs: AnalysisInput, userId: string): Promise<{ reportPath: string; analysis: AnalysisResult; relatorioId: string }> {
         const analysis = await this.analyzeImageWithCustomPrompt(customPrompt, inputs);
         
         const reportsDir = path.join(__dirname, '..', '..', 'reports');
@@ -204,7 +208,11 @@ Para cada item:
         Relatório gerado automaticamente pelo sistema de análise de imagens`;
 
         await fs.writeFile(reportPath, report, 'utf-8');
-        return { reportPath, analysis };
+
+        // Salvar relatório no banco de dados
+        const relatorioId = await RelatorioModel.create(userId, analysis.resposta_completa);
+
+        return { reportPath, analysis, relatorioId };
     }
 }
 
