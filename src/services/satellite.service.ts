@@ -71,9 +71,6 @@ class SatelliteService {
         const dateFromObj = new Date(dateTo);
         dateFromObj.setDate(dateFromObj.getDate() - 90);
         const dateFrom = dateFromObj.toISOString().substring(0, 10);
-        console.log('Sentinel Hub: centroid=[' + lat + ', ' + lon + '], span=' + spanMeters + 'm');
-        console.log('Periodo: ' + dateFrom + ' a ' + dateTo);
-        console.log('BBOX: [' + bbox.map(v => v.toFixed(6)).join(', ') + ']');
 
         const evalscript = '//VERSION=3\nfunction setup() {\n    return {\n        input: [{ bands: [\"B04\", \"B03\", \"B02\"], units: \"DN\" }],\n        output: { bands: 3, sampleType: \"AUTO\" }\n    };\n}\nfunction evaluatePixel(sample) {\n    return [sample.B04, sample.B03, sample.B02];\n}';
 

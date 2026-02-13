@@ -1,16 +1,37 @@
 {
   "info": {
-    "name": "EcoTrust Agropool API",
-    "description": "Carbon Registry System - Sistema de Certificação de Créditos de Carbono\n\n## Fluxo Completo:\n1. Criar Usuário (Produtor/Cooperativa)\n2. Criar Propriedade\n3. Sincronizar dados do CAR\n4. Criar Crédito de Carbono\n5. Ciclo de Certificação (Submit → Verify → Certify → Issue)\n6. Transferir/Aposentar\n7. Verificação Pública",
+    "name": "Sistema de Inventário de Propriedades Rurais API",
+    "description": "Coleção completa de endpoints da API - Cadastro → Questionário → Satélite → Relatório",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "ecotrust-agropool"
+    "version": "2.0.0"
   },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
   "item": [
     {
-      "name": "1. Users",
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": ["{{baseUrl}}"],
+          "path": [""]
+        },
+        "description": "Verifica se a API está funcionando e retorna informações sobre os endpoints disponíveis"
+      },
+      "response": []
+    },
+    {
+      "name": "Users",
       "item": [
         {
-          "name": "Criar Produtor",
+          "name": "Criar Usuário (Produtor)",
           "request": {
             "method": "POST",
             "header": [
@@ -21,113 +42,154 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao.silva@example.com\",\n  \"phone\": \"41999887766\",\n  \"userType\": \"produtor\",\n  \"cooperativeId\": \"coop_001\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Criar Cooperativa",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Cooperativa Agrícola Cascavel\",\n  \"email\": \"contato@coopcascavel.com.br\",\n  \"phone\": \"4133221100\",\n  \"userType\": \"cooperativa\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Criar Auditor",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Maria Auditora\",\n  \"email\": \"maria.auditora@certificadora.com\",\n  \"phone\": \"4133445566\",\n  \"userType\": \"auditor\"\n}"
+              "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao.silva@example.com\",\n  \"phone\": \"(11) 98765-4321\",\n  \"role\": \"produtor\",\n  \"userType\": \"produtor\",\n  \"numCRA\": \"MS-5401405-ABCD1234567890\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/users",
               "host": ["{{baseUrl}}"],
               "path": ["api", "users"]
             },
-            "description": "Cria um auditor responsável por verificar e certificar créditos de carbono"
+            "description": "Cria um novo usuário produtor rural"
           },
           "response": []
         },
         {
-          "name": "Listar Usuários",
+          "name": "Listar Todos os Usuários",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users",
+              "raw": "{{baseUrl}}/api/users?limit=50",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
-            }
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Número máximo de resultados"
+                }
+              ]
+            },
+            "description": "Retorna lista de todos os usuários com limite opcional"
           },
           "response": []
         },
         {
-          "name": "Buscar por Tipo - Produtores",
+          "name": "Buscar Usuário por ID",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/type/produtor",
+              "raw": "{{baseUrl}}/api/users/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "type", "produtor"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Buscar por ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/users/:userId",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", ":userId"],
+              "path": ["api", "users", ":id"],
               "variable": [
                 {
-                  "key": "userId",
+                  "key": "id",
                   "value": "USER_ID_AQUI"
                 }
               ]
-            }
+            },
+            "description": "Busca usuário específico por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar Usuário por Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/email/:email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "email", ":email"],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "joao.silva@example.com"
+                }
+              ]
+            },
+            "description": "Busca usuário por endereço de email"
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar Usuário por Número CAR",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/car/:numCRA",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "car", ":numCRA"],
+              "variable": [
+                {
+                  "key": "numCRA",
+                  "value": "MS-5401405-ABCD1234567890"
+                }
+              ]
+            },
+            "description": "Busca usuário pelo número do CAR"
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar Usuário",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva Atualizado\",\n  \"phone\": \"(11) 91234-5678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_AQUI"
+                }
+              ]
+            },
+            "description": "Atualiza dados de um usuário existente"
+          },
+          "response": []
+        },
+        {
+          "name": "Deletar Usuário",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_AQUI"
+                }
+              ]
+            },
+            "description": "Remove um usuário do sistema"
           },
           "response": []
         }
       ]
     },
     {
-      "name": "2. Properties",
+      "name": "Properties",
       "item": [
         {
-          "name": "Consultar CAR",
+          "name": "Consultar Dados do CAR (Sem Criar Propriedade)",
           "request": {
             "method": "GET",
             "header": [],
@@ -138,12 +200,11 @@
               "variable": [
                 {
                   "key": "carNumber",
-                  "value": "BR-PR-4104808-ABC123",
-                  "description": "Número do CAR no formato BR-UF-MUNICIPIO-NUMERO"
+                  "value": "MS-5401405-ABCD1234567890"
                 }
               ]
             },
-            "description": "Consulta dados do CAR sem criar propriedade. Retorna informações como área total, reserva legal, APP, localização, etc."
+            "description": "Consulta dados do CAR sem criar uma propriedade"
           },
           "response": []
         },
@@ -159,18 +220,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ownerId\": \"USER_ID_DO_PRODUTOR\",\n  \"carData\": {\n    \"number\": \"BR-PR-4104808-ABC123\",\n    \"validated\": false\n  },\n  \"location\": {\n    \"city\": \"Cascavel\",\n    \"state\": \"PR\",\n    \"center\": {\n      \"lat\": -24.95,\n      \"lng\": -53.45\n    }\n  },\n  \"areaDetails\": {\n    \"total\": 50.5,\n    \"forest\": 16.7,\n    \"app\": 4.2,\n    \"productive\": 33.8\n  },\n  \"pooling\": {\n    \"isInCluster\": false\n  },\n  \"status\": \"Pending\",\n  \"region\": \"Sul\"\n}"
+              "raw": "{\n  \"ownerId\": \"USER_ID_AQUI\",\n  \"carData\": {\n    \"number\": \"MS-5401405-ABCD1234567890\",\n    \"legalReserve\": 20,\n    \"app\": 10,\n    \"validated\": false\n  },\n  \"location\": {\n    \"city\": \"Campo Grande\",\n    \"state\": \"MS\",\n    \"center\": {\n      \"lat\": -20.4697,\n      \"lng\": -54.6201\n    }\n  },\n  \"status\": \"Pending\",\n  \"areaDetails\": {\n    \"total\": 100,\n    \"forest\": 30,\n    \"app\": 10,\n    \"productive\": 60,\n    \"legalReserve\": 20\n  },\n  \"pooling\": {\n    \"isInCluster\": false\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/properties",
               "host": ["{{baseUrl}}"],
               "path": ["api", "properties"]
-            }
+            },
+            "description": "Cria uma nova propriedade rural"
           },
           "response": []
         },
         {
-          "name": "Sincronizar CAR",
+          "name": "Sincronizar Dados do CAR",
           "request": {
             "method": "POST",
             "header": [
@@ -181,7 +243,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"carNumber\": \"BR-PR-4104808-ABC123\"\n}"
+              "raw": "{\n  \"carNumber\": \"MS-5401405-ABCD1234567890\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/properties/:propertyId/sync-car",
@@ -193,38 +255,54 @@
                   "value": "PROPERTY_ID_AQUI"
                 }
               ]
-            }
+            },
+            "description": "Sincroniza dados do CAR para uma propriedade existente"
           },
           "response": []
         },
         {
-          "name": "Listar Propriedades",
+          "name": "Listar Todas as Propriedades",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/properties",
+              "raw": "{{baseUrl}}/api/properties?limit=50",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "properties"]
-            }
+              "path": ["api", "properties"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Número máximo de resultados"
+                }
+              ]
+            },
+            "description": "Retorna lista de todas as propriedades"
           },
           "response": []
         },
         {
-          "name": "Propriedades sem Cluster (Para Pooling)",
+          "name": "Buscar Propriedade por ID",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/properties/without-cluster",
+              "raw": "{{baseUrl}}/api/properties/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "properties", "without-cluster"]
-            }
+              "path": ["api", "properties", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PROPERTY_ID_AQUI"
+                }
+              ]
+            },
+            "description": "Busca propriedade específica por ID"
           },
           "response": []
         },
         {
-          "name": "Propriedades por Dono",
+          "name": "Buscar Propriedades por Proprietário",
           "request": {
             "method": "GET",
             "header": [],
@@ -238,12 +316,27 @@
                   "value": "USER_ID_AQUI"
                 }
               ]
-            }
+            },
+            "description": "Retorna todas as propriedades de um proprietário específico"
           },
           "response": []
         },
         {
-          "name": "Atualizar Status",
+          "name": "Buscar Propriedades Sem Cluster",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/without-cluster",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "without-cluster"]
+            },
+            "description": "Retorna propriedades que não estão em nenhum cluster"
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar Status da Propriedade",
           "request": {
             "method": "PATCH",
             "header": [
@@ -257,21 +350,61 @@
               "raw": "{\n  \"status\": \"Active\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/properties/:propertyId/status",
+              "raw": "{{baseUrl}}/api/properties/:id/status",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "properties", ":propertyId", "status"],
+              "path": ["api", "properties", ":id", "status"],
               "variable": [
                 {
-                  "key": "propertyId",
+                  "key": "id",
                   "value": "PROPERTY_ID_AQUI"
                 }
               ]
-            }
+            },
+            "description": "Atualiza o status de uma propriedade (Active, Pending, Alert)"
           },
           "response": []
         },
         {
-          "name": "🛰️ Imagem com Polígono (Coordenadas)",
+          "name": "Deletar Propriedade",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PROPERTY_ID_AQUI"
+                }
+              ]
+            },
+            "description": "Remove uma propriedade do sistema"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Satellite",
+      "item": [
+        {
+          "name": "Obter Token Sentinel Hub",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/satellite/token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "satellite", "token"]
+            },
+            "description": "Obtém token OAuth2 do Sentinel Hub"
+          },
+          "response": []
+        },
+        {
+          "name": "Obter URL da Imagem com Coordenadas",
           "request": {
             "method": "POST",
             "header": [
@@ -282,98 +415,97 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"coordinates\": [\n    { \"lat\": -24.7460698, \"lon\": -53.5716251 },\n    { \"lat\": -24.7485137, \"lon\": -53.5709581 },\n    { \"lat\": -24.7482826, \"lon\": -53.5698980 },\n    { \"lat\": -24.7467285, \"lon\": -53.5703096 },\n    { \"lat\": -24.7458605, \"lon\": -53.5700000 },\n    { \"lat\": -24.7450145, \"lon\": -53.5670305 }\n  ],\n  \"dateFrom\": \"2024-01-01T00:00:00Z\",\n  \"dateTo\": \"2024-12-31T23:59:59Z\",\n  \"width\": 1024,\n  \"height\": 1024,\n  \"label\": \"Propriedade Teste\",\n  \"polygonColor\": \"#FF0000\",\n  \"fillOpacity\": 0.3,\n  \"returnPath\": true\n}"
+              "raw": "{\n  \"coordinates\": [\n    [-53.6, -24.78],\n    [-53.55, -24.78],\n    [-53.55, -24.73],\n    [-53.6, -24.73],\n    [-53.6, -24.78]\n  ],\n  \"date\": \"2024-06-15\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/satellite/image-url",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties", "satellite", "image-url"]
+            },
+            "description": "Retorna URL da imagem de satélite sem fazer download"
+          },
+          "response": []
+        },
+        {
+          "name": "Obter Imagem com Polígono (Coordenadas)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordinates\": [\n    [-53.6, -24.78],\n    [-53.55, -24.78],\n    [-53.55, -24.73],\n    [-53.6, -24.73],\n    [-53.6, -24.78]\n  ],\n  \"date\": \"2024-06-15\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/properties/satellite/polygon",
               "host": ["{{baseUrl}}"],
               "path": ["api", "properties", "satellite", "polygon"]
             },
-            "description": "Gera imagem de satélite com polígono desenhado a partir de array de coordenadas. Retorna a imagem diretamente ou o caminho (returnPath: true)"
+            "description": "Gera imagem de satélite com polígono desenhado a partir de coordenadas"
           },
           "response": []
         },
         {
-          "name": "🛰️ Imagem com Polígono (JSON)",
+          "name": "Obter Imagem com Polígono (JSON)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"propertyKey\": \"poligono_propriedade_1\",\n  \"dateFrom\": \"2024-01-01T00:00:00Z\",\n  \"dateTo\": \"2024-12-31T23:59:59Z\",\n  \"width\": 1024,\n  \"height\": 1024,\n  \"label\": \"Propriedade 1\",\n  \"polygonColor\": \"#FF0000\",\n  \"fillOpacity\": 0.3,\n  \"returnPath\": true\n}"
-            },
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/properties/satellite/polygon-json",
               "host": ["{{baseUrl}}"],
               "path": ["api", "properties", "satellite", "polygon-json"]
             },
-            "description": "Gera imagem de satélite com polígono a partir do arquivo coordenadas.json. Usa a chave propertyKey para buscar as coordenadas"
+            "description": "Gera imagem de satélite a partir do arquivo coordenadas.json"
           },
           "response": []
         },
         {
-          "name": "🛰️ Imagem por BBOX",
+          "name": "Obter Imagem por BBOX",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/properties/satellite/bbox?bbox=-53.5716,-24.7485,-53.5670,-24.7450&dateFrom=2024-01-01T00:00:00Z&dateTo=2024-12-31T23:59:59Z&label=Área Teste&width=1024&height=1024&returnPath=true",
+              "raw": "{{baseUrl}}/api/properties/satellite/bbox?bbox=-53.60,-24.78,-53.55,-24.73&date=2024-06-15&width=1024&height=1024",
               "host": ["{{baseUrl}}"],
               "path": ["api", "properties", "satellite", "bbox"],
               "query": [
                 {
                   "key": "bbox",
-                  "value": "-53.5716,-24.7485,-53.5670,-24.7450",
-                  "description": "Bounding box: [oeste,sul,leste,norte]"
+                  "value": "-53.60,-24.78,-53.55,-24.73",
+                  "description": "Bounding box: minLon,minLat,maxLon,maxLat"
                 },
                 {
-                  "key": "dateFrom",
-                  "value": "2024-01-01T00:00:00Z",
-                  "description": "Data inicial (opcional)"
-                },
-                {
-                  "key": "dateTo",
-                  "value": "2024-12-31T23:59:59Z",
-                  "description": "Data final (opcional)"
-                },
-                {
-                  "key": "label",
-                  "value": "Área Teste",
-                  "description": "Label na imagem (opcional)"
+                  "key": "date",
+                  "value": "2024-06-15",
+                  "description": "Data da imagem (formato: YYYY-MM-DD)"
                 },
                 {
                   "key": "width",
                   "value": "1024",
-                  "description": "Largura em pixels (opcional)"
+                  "description": "Largura da imagem em pixels"
                 },
                 {
                   "key": "height",
                   "value": "1024",
-                  "description": "Altura em pixels (opcional)"
-                },
-                {
-                  "key": "returnPath",
-                  "value": "true",
-                  "description": "Retornar caminho JSON ou imagem direta"
+                  "description": "Altura da imagem em pixels"
                 }
               ]
             },
-            "description": "Obtém imagem de satélite destacada apenas com o bounding box. Mais simples que o polígono."
+            "description": "Obtém imagem de satélite por bounding box"
           },
           "response": []
         }
       ]
     },
     {
-      "name": "3. Carbon Credits - Lifecycle",
+      "name": "AI Analysis",
       "item": [
         {
-          "name": "1. Criar Rascunho (Draft)",
+          "name": "Analisar Imagem com IA",
           "request": {
             "method": "POST",
             "header": [
@@ -384,18 +516,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clusterId\": \"cluster_001\",\n  \"propertyIds\": [\"prop_001\", \"prop_002\", \"prop_003\"],\n  \"carbonAmount\": 1500.75,\n  \"issuedBy\": \"operator_uid_123\",\n  \"certificate\": {\n    \"methodology\": \"VCS\",\n    \"vintage\": 2026,\n    \"projectType\": \"Reflorestamento\",\n    \"verifier\": \"TÜV SÜD Brasil\",\n    \"certificationDate\": \"2026-02-12T00:00:00.000Z\",\n    \"geographicScope\": \"BR-PR-Cascavel\",\n    \"additionalCertifications\": [\"ISO 14064\"]\n  },\n  \"bufferPercentage\": 20,\n  \"countryCode\": \"BR\",\n  \"region\": \"Sul\",\n  \"coordinates\": {\n    \"centerLat\": -24.95,\n    \"centerLng\": -53.45\n  }\n}"
+              "raw": "{\n  \"prompt\": \"Analise esta imagem de satélite e identifique áreas de vegetação, desmatamento e corpos d'água.\",\n  \"inputs\": {\n    \"areaTotal\": 100,\n    \"coordenadas\": [\n      [-53.6, -24.78],\n      [-53.55, -24.78],\n      [-53.55, -24.73],\n      [-53.6, -24.73],\n      [-53.6, -24.78]\n    ],\n    \"usoSoloAtual\": \"pastagem\",\n    \"historicoUso\": \"Área anteriormente utilizada para agricultura extensiva\",\n    \"dadosAdicionais\": \"Solo argiloso, clima subtropical, precipitação média de 1500mm/ano\"\n  }\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/credits",
+              "raw": "{{baseUrl}}/api/ai/analyze",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "credits"]
-            }
+              "path": ["api", "ai", "analyze"]
+            },
+            "description": "Analisa a imagem src/assets/image.png com prompt personalizado e dados da propriedade"
           },
           "response": []
         },
         {
-          "name": "2. Submeter para Verificação",
+          "name": "Gerar Relatório em Markdown",
           "request": {
             "method": "POST",
             "header": [
@@ -406,24 +539,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"submittedBy\": \"operator_uid_123\"\n}"
+              "raw": "{\n  \"prompt\": \"Gere um relatório detalhado sobre o uso do solo, incluindo métricas de vegetação e áreas produtivas.\",\n  \"inputs\": {\n    \"areaTotal\": 100,\n    \"coordenadas\": [\n      [-53.6, -24.78],\n      [-53.55, -24.78],\n      [-53.55, -24.73],\n      [-53.6, -24.73],\n      [-53.6, -24.78]\n    ],\n    \"usoSoloAtual\": \"pastagem\",\n    \"historicoUso\": \"Conversão de floresta para pastagem em 2010\",\n    \"dadosAdicionais\": \"Capacidade de suporte: 1 UA/ha, sistema de rotação de pastagens implementado\"\n  }\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/credits/:creditId/submit",
+              "raw": "{{baseUrl}}/api/ai/report",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "credits", ":creditId", "submit"],
-              "variable": [
-                {
-                  "key": "creditId",
-                  "value": "CREDIT_ID_AQUI"
-                }
-              ]
-            }
+              "path": ["api", "ai", "report"]
+            },
+            "description": "Gera relatório em formato Markdown da análise com dados da propriedade"
           },
           "response": []
         },
         {
-          "name": "3. Verificar (Verificador)",
+          "name": "Salvar Relatório em Arquivo",
           "request": {
             "method": "POST",
             "header": [
@@ -434,234 +562,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"verifiedBy\": \"verifier_uid_456\"\n}"
+              "raw": "{\n  \"prompt\": \"Crie um relatório completo de análise ambiental da propriedade rural para inventário de GEE.\",\n  \"inputs\": {\n    \"areaTotal\": 150,\n    \"coordenadas\": [\n      [-53.6, -24.78],\n      [-53.55, -24.78],\n      [-53.55, -24.73],\n      [-53.6, -24.73],\n      [-53.6, -24.78]\n    ],\n    \"usoSoloAtual\": \"agricultura - soja\",\n    \"historicoUso\": \"Área de floresta nativa até 2005, convertida para agricultura de grãos\",\n    \"dadosAdicionais\": \"Sistema de plantio direto desde 2015, rotação soja-milho, uso de fertilizantes nitrogenados 150kg N/ha/ano\"\n  }\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/credits/:creditId/verify",
+              "raw": "{{baseUrl}}/api/ai/save-report",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "credits", ":creditId", "verify"],
-              "variable": [
-                {
-                  "key": "creditId",
-                  "value": "CREDIT_ID_AQUI"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "4. Certificar e Assinar (Supervisor)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"approvedBy\": \"supervisor_uid_789\",\n  \"privateKey\": \"-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...\\n-----END PRIVATE KEY-----\"\n}"
+              "path": ["api", "ai", "save-report"]
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/credits/:creditId/certify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "credits", ":creditId", "certify"],
-              "variable": [
-                {
-                  "key": "creditId",
-                  "value": "CREDIT_ID_AQUI"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "5. Emitir Token",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/credits/:creditId/issue",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "credits", ":creditId", "issue"],
-              "variable": [
-                {
-                  "key": "creditId",
-                  "value": "CREDIT_ID_AQUI"
-                }
-              ]
-            }
+            "description": "Salva o relatório gerado em arquivo .md na pasta reports/ com dados completos da propriedade"
           },
           "response": []
         }
       ]
-    },
-    {
-      "name": "4. Carbon Credits - Operations",
-      "item": [
-        {
-          "name": "Transferir Propriedade (Venda)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"newOwnerId\": \"buyer_uid_999\",\n  \"price\": 75000.00,\n  \"currency\": \"BRL\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/credits/:creditId/transfer",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "credits", ":creditId", "transfer"],
-              "variable": [
-                {
-                  "key": "creditId",
-                  "value": "CREDIT_ID_AQUI"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Aposentar Crédito (Retire)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"retiredBy\": \"owner_uid_888\",\n  \"reason\": \"Compensação de emissões de CO2 da empresa XYZ\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/credits/:creditId/retire",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "credits", ":creditId", "retire"],
-              "variable": [
-                {
-                  "key": "creditId",
-                  "value": "CREDIT_ID_AQUI"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Listar Todos os Créditos",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/credits",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "credits"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Buscar por ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/credits/:creditId",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "credits", ":creditId"],
-              "variable": [
-                {
-                  "key": "creditId",
-                  "value": "CREDIT_ID_AQUI"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Buscar por Status - Issued",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/credits/status/Issued",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "credits", "status", "Issued"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Buscar por Status - Certified",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/credits/status/Certified",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "credits", "status", "Certified"]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "5. Public Verification",
-      "item": [
-        {
-          "name": "Verificar Certificado (API Pública)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/credits/verify/:tokenId",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "credits", "verify", ":tokenId"],
-              "variable": [
-                {
-                  "key": "tokenId",
-                  "value": "TOKEN_ID_UUID_AQUI"
-                }
-              ]
-            },
-            "description": "API pública para verificação de autenticidade do certificado.\n\nQualquer pessoa pode usar este endpoint para validar se um crédito de carbono é legítimo."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Health Check",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/",
-          "host": ["{{baseUrl}}"],
-          "path": [""]
-        }
-      },
-      "response": []
-    }
-  ],
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000",
-      "type": "string"
     }
   ]
 }

@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { logger } from './middlewares/logger';
 import userRoutes from './modules/user/user.routes';
 import propertyRoutes from './modules/property/property.routes';
+import aiAnalysisRoutes from './modules/ai-analysis/ai-analysis.routes';
 
 dotenv.config();
 
@@ -22,13 +23,15 @@ app.get('/', (_req: Request, res: Response) => {
     endpoints: {
       users: '/api/users',
       properties: '/api/properties',
-      satellite: '/api/properties/satellite/*'
+      satellite: '/api/properties/satellite/*',
+      ai_analysis: '/api/ai/*'
     }
   });
 });
 
 app.use('/api/users', userRoutes);
 app.use('/api/properties', propertyRoutes);
+app.use('/api/ai', aiAnalysisRoutes);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);
