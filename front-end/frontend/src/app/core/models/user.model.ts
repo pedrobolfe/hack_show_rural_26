@@ -15,6 +15,13 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
   questionsAndResponses?: Array<IQuestionAndResponse>;
+  // Campos do último relatório de carbono
+  lastReportDate?: Date;
+  totalEmissoes?: number; // tCO₂e/ano
+  totalRemocoes?: number; // tCO₂e/ano
+  balancoLiquido?: number; // tCO₂e/ano
+  statusCarbono?: 'POSITIVO' | 'NEGATIVO' | 'NEUTRO';
+  creditosGeraveis?: number; // tCO₂e/ano
 }
 
 export interface LoginRequest {

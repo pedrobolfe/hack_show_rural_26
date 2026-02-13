@@ -15,7 +15,39 @@
       </div>
     </div>
 
-    <!-- Action Buttons -->
+    <!-- Carbon Status Section -->
+    <div class="carbon-status" *ngIf="user()?.lastReportDate">
+      <div class="carbon-card">
+        <h3 class="carbon-title">📊 Status de Carbono</h3>
+        <div class="carbon-grid">
+          <div class="carbon-item">
+            <span class="carbon-label">Emissões Anuais</span>
+            <span class="carbon-value emissions">{{ user()?.totalEmissoes || 0 | number:'1.1-1' }} tCO₂e/ano</span>
+          </div>
+          <div class="carbon-item">
+            <span class="carbon-label">Remoções Anuais</span>
+            <span class="carbon-value removals">{{ user()?.totalRemocoes || 0 | number:'1.1-1' }} tCO₂e/ano</span>
+          </div>
+          <div class="carbon-item">
+            <span class="carbon-label">Balanço Líquido</span>
+            <span class="carbon-value" [ngClass]="getBalanceClass(user()?.balancoLiquido || 0)">
+              {{ user()?.balancoLiquido || 0 | number:'1.1-1' }} tCO₂e/ano
+            </span>
+          </div>
+          <div class="carbon-item">
+            <span class="carbon-label">Status</span>
+            <span class="carbon-status-badge" [ngClass]="getStatusClass(user()?.statusCarbono || 'NEUTRO')">
+              {{ getStatusText(user()?.statusCarbono || 'NEUTRO') }}
+            </span>
+          </div>
+          <div class="carbon-item full-width" *ngIf="(user()?.creditosGeraveis || 0) > 0">
+            <span class="carbon-label">Créditos Geráveis</span>
+            <span class="carbon-value credits">{{ user()?.creditosGeraveis || 0 | number:'1.1-1' }} tCO₂e/ano</span>
+          </div>
+        </div>
+        <p class="carbon-date">Último relatório: {{ user()?.lastReportDate | date:'dd/MM/yyyy' }}</p>
+      </div>
+    </div>
     <div class="action-section">
       <button class="btn-action" (click)="editQuestionario()">
         <span class="icon">📝</span>
@@ -26,7 +58,7 @@
       </button>
 
       <button class="btn-action btn-generate" (click)="generateRelatorio()" [disabled]="generatingReport()">
-        <span class="icon">🚀</span>
+        <span class="icon" [class.animating]="generatingReport()">🚀</span>
         <div class="action-content">
           <h3>{{ generatingReport() ? 'Gerando Relatório...' : 'Gerar Relatório' }}</h3>
           <p>{{ generatingReport() ? 'Aguarde, processando análise' : 'Criar novo inventário de carbono' }}</p>

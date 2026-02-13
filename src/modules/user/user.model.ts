@@ -11,6 +11,13 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
   questionsAndResponses?: Array<IQuestionAndResponse>;
+  // Campos do último relatório de carbono
+  lastReportDate?: Date;
+  totalEmissoes?: number; // tCO₂e/ano
+  totalRemocoes?: number; // tCO₂e/ano
+  balancoLiquido?: number; // tCO₂e/ano
+  statusCarbono?: 'POSITIVO' | 'NEGATIVO' | 'NEUTRO';
+  creditosGeraveis?: number; // tCO₂e/ano
 }
 
 export class UserModel implements IUser {
@@ -24,6 +31,13 @@ export class UserModel implements IUser {
   createdAt: Date;
   updatedAt: Date;
   questionsAndResponses?: Array<IQuestionAndResponse>;
+  // Campos do último relatório de carbono
+  lastReportDate?: Date;
+  totalEmissoes?: number;
+  totalRemocoes?: number;
+  balancoLiquido?: number;
+  statusCarbono?: 'POSITIVO' | 'NEGATIVO' | 'NEUTRO';
+  creditosGeraveis?: number;
   
 
   constructor(data: Partial<IUser>) {
@@ -37,6 +51,13 @@ export class UserModel implements IUser {
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
     this.questionsAndResponses = data.questionsAndResponses || [];
+    // Campos do último relatório
+    this.lastReportDate = data.lastReportDate;
+    this.totalEmissoes = data.totalEmissoes;
+    this.totalRemocoes = data.totalRemocoes;
+    this.balancoLiquido = data.balancoLiquido;
+    this.statusCarbono = data.statusCarbono;
+    this.creditosGeraveis = data.creditosGeraveis;
   }
 
   validate(): { isValid: boolean; errors: string[] } {
@@ -84,7 +105,14 @@ export class UserModel implements IUser {
       numCRA: this.numCRA,
       questionsAndResponses: this.questionsAndResponses || [],
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
+      // Campos do último relatório
+      lastReportDate: this.lastReportDate,
+      totalEmissoes: this.totalEmissoes,
+      totalRemocoes: this.totalRemocoes,
+      balancoLiquido: this.balancoLiquido,
+      statusCarbono: this.statusCarbono,
+      creditosGeraveis: this.creditosGeraveis
     };
   }
 
@@ -99,7 +127,14 @@ export class UserModel implements IUser {
       numCRA: this.numCRA,
       questionsAndResponses: this.questionsAndResponses || [],
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
+      // Campos do último relatório
+      lastReportDate: this.lastReportDate,
+      totalEmissoes: this.totalEmissoes,
+      totalRemocoes: this.totalRemocoes,
+      balancoLiquido: this.balancoLiquido,
+      statusCarbono: this.statusCarbono,
+      creditosGeraveis: this.creditosGeraveis
     };
   }
 }
