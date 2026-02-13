@@ -7,7 +7,7 @@
 .home-card {
   background: white;
   border-radius: 24px;
-  padding: 40px;
+  padding: 30px;
   max-width: 650px;
   margin: 0 auto;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
@@ -28,28 +28,28 @@
 .user-info {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 25px;
+  gap: 16px;
+  padding: 18px;
   background: linear-gradient(135deg, #1e7a3e 0%, #2d5016 100%);
-  border-radius: 18px;
-  margin-bottom: 35px;
+  border-radius: 16px;
+  margin-bottom: 20px;
   color: white;
-  box-shadow: 0 10px 30px rgba(30, 122, 62, 0.3);
+  box-shadow: 0 8px 25px rgba(30, 122, 62, 0.3);
 }
 
 .avatar {
-  width: 70px;
-  height: 70px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: white;
   color: #1e7a3e;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 900;
   flex-shrink: 0;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .user-details {
@@ -58,39 +58,39 @@
 }
 
 .user-name {
-  margin: 0 0 8px 0;
-  font-size: 22px;
+  margin: 0 0 6px 0;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.5px;
 }
 
 .user-email,
 .user-car {
-  margin: 5px 0;
-  font-size: 14px;
+  margin: 3px 0;
+  font-size: 13px;
   opacity: 0.95;
   font-weight: 500;
 }
 
 .action-section {
-  margin-bottom: 35px;
+  margin-bottom: 25px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
 
 .btn-action {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 20px 24px;
+  gap: 15px;
+  padding: 16px 20px;
   background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
   border: 2px solid #e0e0e0;
-  border-radius: 16px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .btn-action:hover:not(:disabled) {
@@ -124,7 +124,7 @@
 }
 
 .icon {
-  font-size: 36px;
+  font-size: 30px;
 }
 
 .icon.animating {
@@ -146,21 +146,16 @@
   }
 }
 
-.action-content {
-  flex: 1;
-  text-align: left;
-}
-
 .action-content h3 {
-  margin: 0 0 6px 0;
-  font-size: 17px;
+  margin: 0 0 4px 0;
+  font-size: 16px;
   color: #2c3e50;
   font-weight: 700;
 }
 
 .action-content p {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   color: #666;
   font-weight: 500;
 }
@@ -388,95 +383,96 @@
   }
 }
 
-/* Carbon Status Section */
-.carbon-status {
-  margin-bottom: 35px;
-}
-
-.carbon-card {
+/* Carbon Status Compact Version */
+.carbon-status-compact {
+  margin-bottom: 20px;
+  padding: 15px;
   background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
   border: 2px solid #e8f5e9;
-  border-radius: 18px;
-  padding: 25px;
-  box-shadow: 0 8px 25px rgba(30, 122, 62, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(30, 122, 62, 0.08);
 }
 
-.carbon-title {
-  margin: 0 0 20px 0;
+.carbon-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.carbon-header h3 {
+  margin: 0;
   color: #2c3e50;
-  font-size: 20px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.carbon-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
-.carbon-item {
-  text-align: center;
-  padding: 12px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-}
-
-.carbon-item.full-width {
-  grid-column: 1 / -1;
-  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-  border: 2px solid #ffc107;
-}
-
-.carbon-label {
-  display: block;
-  font-size: 12px;
-  color: #666;
-  font-weight: 600;
-  margin-bottom: 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.carbon-value {
-  display: block;
   font-size: 16px;
   font-weight: 700;
+}
+
+.carbon-row {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.carbon-col {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.carbon-col .label {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.carbon-col .value {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
   color: #2c3e50;
 }
 
-.carbon-value.emissions {
+.carbon-col .value.emissions {
   color: #dc3545;
 }
 
-.carbon-value.removals {
+.carbon-col .value.removals {
   color: #28a745;
 }
 
-.carbon-value.positive {
+.carbon-col .value.positive {
   color: #28a745;
 }
 
-.carbon-value.negative {
+.carbon-col .value.negative {
   color: #dc3545;
 }
 
-.carbon-value.neutral {
+.carbon-col .value.neutral {
   color: #6c757d;
 }
 
-.carbon-value.credits {
-  color: #ffc107;
-  font-size: 18px;
+.carbon-date {
+  text-align: center;
+  font-size: 11px;
+  color: #666;
+  margin: 8px 0 0 0;
+  font-style: italic;
 }
 
 .carbon-status-badge {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -498,12 +494,4 @@
   background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
   color: #383d41;
   border: 1px solid #6c757d;
-}
-
-.carbon-date {
-  text-align: center;
-  font-size: 12px;
-  color: #666;
-  margin: 0;
-  font-style: italic;
 }

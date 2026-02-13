@@ -5,49 +5,38 @@
   <div class="home-card">
     <!-- User Info -->
     <div class="user-info" *ngIf="user()">
-      <div class="avatar">
-        {{ user()!.name.charAt(0).toUpperCase() }}
-      </div>
       <div class="user-details">
         <h2 class="user-name">Olá, {{ user()?.name }}</h2>
-        <p class="user-email">{{ user()?.email }}</p>
         <p class="user-car">CAR: {{ user()?.numCRA }}</p>
       </div>
     </div>
 
-    <!-- Carbon Status Section -->
-    <div class="carbon-status" *ngIf="user()?.lastReportDate">
-      <div class="carbon-card">
-        <h3 class="carbon-title">📊 Status de Carbono</h3>
-        <div class="carbon-grid">
-          <div class="carbon-item">
-            <span class="carbon-label">Emissões Anuais</span>
-            <span class="carbon-value emissions">{{ user()?.totalEmissoes || 0 | number:'1.1-1' }} tCO₂e/ano</span>
-          </div>
-          <div class="carbon-item">
-            <span class="carbon-label">Remoções Anuais</span>
-            <span class="carbon-value removals">{{ user()?.totalRemocoes || 0 | number:'1.1-1' }} tCO₂e/ano</span>
-          </div>
-          <div class="carbon-item">
-            <span class="carbon-label">Balanço Líquido</span>
-            <span class="carbon-value" [ngClass]="getBalanceClass(user()?.balancoLiquido || 0)">
-              {{ user()?.balancoLiquido || 0 | number:'1.1-1' }} tCO₂e/ano
-            </span>
-          </div>
-          <div class="carbon-item">
-            <span class="carbon-label">Status</span>
-            <span class="carbon-status-badge" [ngClass]="getStatusClass(user()?.statusCarbono || 'NEUTRO')">
-              {{ getStatusText(user()?.statusCarbono || 'NEUTRO') }}
-            </span>
-          </div>
-          <div class="carbon-item full-width" *ngIf="(user()?.creditosGeraveis || 0) > 0">
-            <span class="carbon-label">Créditos Geráveis</span>
-            <span class="carbon-value credits">{{ user()?.creditosGeraveis || 0 | number:'1.1-1' }} tCO₂e/ano</span>
-          </div>
-        </div>
-        <p class="carbon-date">Último relatório: {{ user()?.lastReportDate | date:'dd/MM/yyyy' }}</p>
+    <!-- Carbon Status Section (Compact) -->
+    <div class="carbon-status-compact" *ngIf="user()?.lastReportDate">
+      <div class="carbon-header">
+        <h3>📊 Status de Carbono</h3>
+        <span class="carbon-status-badge" [ngClass]="getStatusClass(user()?.statusCarbono || 'NEUTRO')">
+          {{ getStatusText(user()?.statusCarbono || 'NEUTRO') }}
+        </span>
       </div>
+      <div class="carbon-row">
+        <div class="carbon-col">
+          <span class="label">Emissões</span>
+          <span class="value emissions">{{ user()?.totalEmissoes || 0 | number:'1.1-1' }}</span>
+        </div>
+        <div class="carbon-col">
+          <span class="label">Remoções</span>
+          <span class="value removals">{{ user()?.totalRemocoes || 0 | number:'1.1-1' }}</span>
+        </div>
+        <div class="carbon-col">
+          <span class="label">Balanço</span>
+          <span class="value" [ngClass]="getBalanceClass(user()?.balancoLiquido || 0)">{{ user()?.balancoLiquido || 0 | number:'1.1-1' }}</span>
+        </div>
+      </div>
+      <p class="carbon-date">Último relatório: {{ user()?.lastReportDate | date:'dd/MM/yyyy' }}</p>
     </div>
+
+    <!-- Action Buttons -->
     <div class="action-section">
       <button class="btn-action" (click)="editQuestionario()">
         <span class="icon">📝</span>
