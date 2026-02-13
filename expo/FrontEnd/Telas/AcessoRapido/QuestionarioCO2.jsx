@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { auth } from '../../../firebaseConfig';
-import { createPropriedade, getUserByEmail } from '../../../apirequest';
+import { updateProfile, getUserByEmail } from '../../../apirequest';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Input = ({ label, value, onChangeText, ...props }) => (
@@ -39,9 +39,9 @@ const SubSectionHeader = ({ title }) => (
   <Text style={styles.subSectionHeader}>{title}</Text>
 );
 
-export default function QuestionarioCO2({ navigation }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function QuestionarioCO2({ navigation, userData: initialUserData }) {
+  const [user, setUser] = useState(initialUserData || null);
+  const [loading, setLoading] = useState(!initialUserData);
   const [saving, setSaving] = useState(false);
 
   // Tabela 2. Sistema de cultivo.
@@ -139,108 +139,77 @@ export default function QuestionarioCO2({ navigation }) {
       return;
     }
 
-    if (!user || !user.numCRA) {
-      Alert.alert('Erro Crítico', 'O número do CAR não foi encontrado. Não é possível salvar a propriedade.');
+    if (!user || !user.id) {
+      Alert.alert('Erro Crítico', 'Dados do usuário não encontrados. Não é possível salvar.');
       return;
     }
 
     setSaving(true);
 
-    const questionnaireData = {
-      sistemaCultivo: {
-        dataPlantio,
-        dataColheita,
-        classeTexturalSolo,
-        teorArgila,
-        usoAnteriorTerra,
-        sistemaCultivoAtual,
-        tempoAdocaoSistema,
-        areaQueimaResiduos: parseFloat(areaQueimaResiduos.replace(',', '.')) || 0,
-        areaManejoSolosOrganicos: parseFloat(areaManejoSolosOrganicos.replace(',', '.')) || 0,
-        areaCultivada: parseFloat(areaCultivada.replace(',', '.')) || 0,
-        produtividadeMedia: parseFloat(produtividadeMedia.replace(',', '.')) || 0,
-      },
-      adubacao: {
-        sintetica: {
-          adubacaoNitrogenada: parseFloat(adubacaoNitrogenada.replace(',', '.')) || 0,
-          teorNitrogenioAdubo: parseFloat(teorNitrogenioAdubo.replace(',', '.')) || 0,
-          ureia: parseFloat(ureia.replace(',', '.')) || 0,
-        },
-        correcaoSolo: {
-          calcarioCalcitico: parseFloat(calcarioCalcitico.replace(',', '.')) || 0,
-          calcarioDolomitico: parseFloat(calcarioDolomitico.replace(',', '.')) || 0,
-          gessoAgricola: parseFloat(gessoAgricola.replace(',', '.')) || 0,
-        },
-        organica: {
-          compostoOrganico: parseFloat(compostoOrganico.replace(',', '.')) || 0,
-          estercoBovino: parseFloat(estercoBovino.replace(',', '.')) || 0,
-          estercoAvicola: parseFloat(estercoAvicola.replace(',', '.')) || 0,
-          outros: parseFloat(outrosAdubosOrganicos.replace(',', '.')) || 0,
-        },
-        verde: {
-          leguminosa: parseFloat(leguminosa.replace(',', '.')) || 0,
-          graminea: parseFloat(graminea.replace(',', '.')) || 0,
-          outros: parseFloat(outrosAdubosVerdes.replace(',', '.')) || 0,
-        },
-      },
-      consumoCombustivelMecanizadas: {
-        tipoCombustivel: tipoCombustivelMecanizadas,
-        tipoQuantificacao: tipoQuantificacaoConsumo,
-        quantidade: parseFloat(quantidadeConsumidaMecanizadas.replace(',', '.')) || 0,
-      },
-      operacoesMecanizadas: {
-        preImplantacao: {
-          calagem: parseInt(repCalagem, 10) || 0,
-          aplicacaoHerbicida: parseInt(repHerbicidaPre, 10) || 0,
-          limpeza: parseInt(repLimpeza, 10) || 0,
-        },
-        implantacao: {
-          plantioComAdubacao: parseInt(repPlantio, 10) || 0,
-        },
-        manutencao: {
-          aplicacaoFungicida: parseInt(repFungicida, 10) || 0,
-          aplicacaoInseticida: parseInt(repInseticida, 10) || 0,
-          aplicacaoHerbicida: parseInt(repHerbicidaManutencao, 10) || 0,
-        },
-        colheita: {
-          colheita: parseInt(repColheita, 10) || 0,
-        },
-      },
-      consumoCombustivelInterno: {
-        gasolina: parseFloat(consumoGasolina.replace(',', '.')) || 0,
-        etanol: parseFloat(consumoEtanol.replace(',', '.')) || 0,
-      },
-      consumoCombustivelTransporte: {
-        tipoCombustivel: tipoCombustivelTransporte,
-        quantidade: parseFloat(quantidadeConsumidaTransporte.replace(',', '.')) || 0,
-      },
-    };
-
-    const propertyData = {
-      ownerId: user.id,
-      name: `Propriedade de ${user.name.split(' ')[0]}`,
-      carData: {
-        number: user.numCRA,
-        legalReserve: 0, // Campo não presente no novo questionário
-        app: 0, // Campo não presente no novo questionário
-        validated: false
-      },
-      status: "Pending",
-      areaDetails: {
-        total: parseFloat(areaCultivada.replace(',', '.')) || 0,
-        app: 0, // Campo não presente no novo questionário
-        legalReserve: 0, // Campo não presente no novo questionário
-      },
-      questionnaire: questionnaireData
-    };
+    // Montar questionsAndResponses no formato { question, response }
+    const questionsAndResponses = [
+      { question: 'Data de plantio', response: dataPlantio },
+      { question: 'Data de colheita', response: dataColheita },
+      { question: 'Classe textural do solo', response: classeTexturalSolo },
+      { question: 'Teor de argila no solo', response: teorArgila },
+      { question: 'Uso anterior da terra', response: usoAnteriorTerra },
+      { question: 'Sistema de cultivo atual', response: sistemaCultivoAtual },
+      { question: 'Tempo de adoção do sistema', response: tempoAdocaoSistema },
+      { question: 'Área de queima de resíduos da cultura (hectare)', response: areaQueimaResiduos },
+      { question: 'Área de manejo de solos orgânicos (hectare)', response: areaManejoSolosOrganicos },
+      { question: 'Área cultivada (hectare)', response: areaCultivada },
+      { question: 'Produtividade média (tonelada/hectare)', response: produtividadeMedia },
+      { question: 'Adubação nitrogenada sintética (kg/hectare)', response: adubacaoNitrogenada },
+      { question: 'Teor de nitrogênio no adubo sintético (%)', response: teorNitrogenioAdubo },
+      { question: 'Ureia (kg/hectare)', response: ureia },
+      { question: 'Calcário calcítico (kg/hectare)', response: calcarioCalcitico },
+      { question: 'Calcário dolomítico (kg/hectare)', response: calcarioDolomitico },
+      { question: 'Gesso agrícola (kg/hectare)', response: gessoAgricola },
+      { question: 'Composto orgânico (kg/hectare)', response: compostoOrganico },
+      { question: 'Esterco bovino (kg/hectare)', response: estercoBovino },
+      { question: 'Esterco avícola (kg/hectare)', response: estercoAvicola },
+      { question: 'Outros adubos orgânicos (kg/hectare)', response: outrosAdubosOrganicos },
+      { question: 'Leguminosa (kg/hectare)', response: leguminosa },
+      { question: 'Gramínea (kg/hectare)', response: graminea },
+      { question: 'Outros adubos verdes (kg/hectare)', response: outrosAdubosVerdes },
+      { question: 'Tipo de combustível das operações mecanizadas', response: tipoCombustivelMecanizadas },
+      { question: 'Tipo de quantificação de consumo', response: tipoQuantificacaoConsumo },
+      { question: 'Quantidade consumida mecanizadas (litro)', response: quantidadeConsumidaMecanizadas },
+      { question: 'Calagem (Nº de repetições)', response: repCalagem },
+      { question: 'Aplicação de herbicida pré-implantação (Nº de repetições)', response: repHerbicidaPre },
+      { question: 'Limpeza (Nº de repetições)', response: repLimpeza },
+      { question: 'Plantio com adubação (Nº de repetições)', response: repPlantio },
+      { question: 'Aplicação de fungicida (Nº de repetições)', response: repFungicida },
+      { question: 'Aplicação de inseticida (Nº de repetições)', response: repInseticida },
+      { question: 'Aplicação de herbicida manutenção (Nº de repetições)', response: repHerbicidaManutencao },
+      { question: 'Colheita (Nº de repetições)', response: repColheita },
+      { question: 'Gasolina operações internas (litro)', response: consumoGasolina },
+      { question: 'Etanol hidratado operações internas (litro)', response: consumoEtanol },
+      { question: 'Tipo de combustível no transporte da produção', response: tipoCombustivelTransporte },
+      { question: 'Quantidade consumida transporte (litro)', response: quantidadeConsumidaTransporte },
+    ];
 
     try {
-      const newProperty = await createPropriedade(propertyData);
-      Alert.alert('Sucesso!', 'Seu inventário foi salvo e a propriedade foi criada.');
-      navigation.navigate('Propriedade', { propertyId: newProperty.id });
+      await updateProfile(user.id, { questionsAndResponses });
+      
+      // Atualizar cache local
+      const updatedUser = { ...user, questionsAndResponses };
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await AsyncStorage.setItem(`user_${currentUser.uid}`, JSON.stringify(updatedUser));
+      }
+
+      Alert.alert(
+        'Sucesso!', 
+        'Seu questionário foi salvo. Agora você pode gerar seu relatório de inventário de carbono.',
+        [
+          { text: 'Gerar Relatório', onPress: () => navigation.navigate('Relatorio') },
+          { text: 'Ir para o Início', onPress: () => navigation.navigate('Dashboard') },
+        ]
+      );
     } catch (error) {
       console.error("Erro ao salvar questionário:", error);
-      Alert.alert('Erro ao Salvar', 'Ocorreu um erro ao salvar seu inventário. Por favor, tente novamente.');
+      Alert.alert('Erro ao Salvar', 'Ocorreu um erro ao salvar seu questionário. Por favor, tente novamente.');
     } finally {
       setSaving(false);
     }

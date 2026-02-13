@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 
 // Importação das telas de autenticação
@@ -19,6 +19,8 @@ import RelatorioFinalCO2 from './FrontEnd/Telas/AcessoRapido/RelatorioFinalCO2';
 
 // Importação da configuração do Firebase e fontes
 import { watchAuthState } from './firebaseConfig';
+import { getUserByEmail } from './apirequest';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   useFonts, 
   SpaceGrotesk_400Regular, 
@@ -43,15 +45,19 @@ const AuthNavigator = () => (
 );
 
 // Navegador para o fluxo principal do aplicativo
-const AppNavigator = () => (
-  // A `initialRouteName` define a "Dashboard" como a primeira tela a ser vista após o login.
-  <AppStack.Navigator initialRouteName="Dashboard" screenOptions={{ headerShown: false }}>
-    <AppStack.Screen name="Dashboard" component={Dashboard} />
-        <AppStack.Screen name="Questionario" component={QuestionarioCO2} />
-        <AppStack.Screen name="Propriedade" component={PropriedadeCO2} />
-    {/* As demais telas ficam disponíveis para navegação a partir da tela inicial. */}
+const AppNavigator = ({ initialRoute, userData }) => (
+  <AppStack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+    <AppStack.Screen name="Dashboard">
+      {(props) => <Dashboard {...props} userData={userData} />}
+    </AppStack.Screen>
+    <AppStack.Screen name="Questionario">
+      {(props) => <QuestionarioCO2 {...props} userData={userData} />}
+    </AppStack.Screen>
+    <AppStack.Screen name="Propriedade" component={PropriedadeCO2} />
     <AppStack.Screen name="Satelite" component={SateliteCO2} />
-    <AppStack.Screen name="Relatorio" component={RelatorioFinalCO2} />
+    <AppStack.Screen name="Relatorio">
+      {(props) => <RelatorioFinalCO2 {...props} userData={userData} />}
+    </AppStack.Screen>
     <AppStack.Screen name="Perfil" component={Perfil} />
   </AppStack.Navigator>
 );
@@ -68,11 +74,52 @@ export default function App() {
   // Estados para controlar a inicialização e o usuário logado
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [initialRoute, setInitialRoute] = useState('Dashboard');
+  const [loadingUserData, setLoadingUserData] = useState(false);
 
   // Monitora o estado de autenticação do Firebase
   useEffect(() => {
-    const unsubscribe = watchAuthState(authenticatedUser => {
+    const unsubscribe = watchAuthState(async (authenticatedUser) => {
       setUser(authenticatedUser);
+
+      if (authenticatedUser) {
+        // Usuário logado: buscar dados do backend para verificar questionário
+        setLoadingUserData(true);
+        try {
+          const apiUser = await getUserByEmail(authenticatedUser.email);
+          const data = apiUser?.data || apiUser;
+          setUserData(data);
+          await AsyncStorage.setItem(`user_${authenticatedUser.uid}`, JSON.stringify(data));
+
+          // Verificar se o usuário já respondeu o questionário
+          const hasAnswered = data?.questionsAndResponses && data.questionsAndResponses.length > 0;
+          setInitialRoute(hasAnswered ? 'Dashboard' : 'Questionario');
+        } catch (error) {
+          console.error('Erro ao buscar dados do usuário:', error);
+          // Tentar cache local
+          try {
+            const cached = await AsyncStorage.getItem(`user_${authenticatedUser.uid}`);
+            if (cached) {
+              const data = JSON.parse(cached);
+              setUserData(data);
+              const hasAnswered = data?.questionsAndResponses && data.questionsAndResponses.length > 0;
+              setInitialRoute(hasAnswered ? 'Dashboard' : 'Questionario');
+            } else {
+              setInitialRoute('Questionario');
+            }
+          } catch {
+            setInitialRoute('Questionario');
+          }
+        } finally {
+          setLoadingUserData(false);
+        }
+      } else {
+        // Usuário deslogado
+        setUserData(null);
+        setInitialRoute('Dashboard');
+      }
+
       if (initializing) {
         setInitializing(false);
       }
@@ -84,20 +131,24 @@ export default function App() {
 
   // Esconde a tela de splash quando as fontes e a verificação de auth estiverem concluídas
   const onLayoutRootView = useCallback(async () => {
-    if ((fontsLoaded || fontError) && !initializing) {
+    if ((fontsLoaded || fontError) && !initializing && !loadingUserData) {
       await SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError, initializing]);
+  }, [fontsLoaded, fontError, initializing, loadingUserData]);
 
   // Não renderiza nada até que tudo esteja carregado
-  if (!fontsLoaded && !fontError || initializing) {
-    return null;
+  if ((!fontsLoaded && !fontError) || initializing || loadingUserData) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#06402B" />
+      </View>
+    );
   }
 
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <NavigationContainer>
-        {user ? <AppNavigator /> : <AuthNavigator />}
+        {user ? <AppNavigator initialRoute={initialRoute} userData={userData} /> : <AuthNavigator />}
       </NavigationContainer>
     </View>
   );

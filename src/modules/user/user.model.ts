@@ -82,6 +82,7 @@ export class UserModel implements IUser {
       role: this.role,
       userType: this.userType,
       numCRA: this.numCRA,
+      questionsAndResponses: this.questionsAndResponses || [],
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     };
@@ -96,6 +97,7 @@ export class UserModel implements IUser {
       role: this.role,
       userType: this.userType,
       numCRA: this.numCRA,
+      questionsAndResponses: this.questionsAndResponses || [],
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     };

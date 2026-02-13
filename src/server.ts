@@ -6,12 +6,9 @@ import { logger } from './middlewares/logger';
 import userRoutes from './modules/user/user.routes';
 import propertyRoutes from './modules/property/property.routes';
 import aiAnalysisRoutes from './modules/ai-analysis/ai-analysis.routes';
-<<<<<<< HEAD
 import authRoutes from './modules/auth/auth.routes';
 import './modules/auth/passport'; // Importa a configuração do Passport.js
-=======
 import relatorioRoutes from './modules/relatorio/relatorio.routes';
->>>>>>> 8dfd6d7f1300eb6fce36fd42c7c9c8355c1dae84
 
 dotenv.config();
 
@@ -46,11 +43,8 @@ app.get('/', (_req: Request, res: Response) => {
       properties: '/api/properties',
       satellite: '/api/properties/satellite/*',
       ai_analysis: '/api/ai/*',
-<<<<<<< HEAD
-      auth: '/api/auth'
-=======
+      auth: '/api/auth',
       relatorios: '/api/relatorios/*'
->>>>>>> 8dfd6d7f1300eb6fce36fd42c7c9c8355c1dae84
     }
   });
 });
@@ -58,11 +52,8 @@ app.get('/', (_req: Request, res: Response) => {
 app.use('/api/users', userRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/ai', aiAnalysisRoutes);
-<<<<<<< HEAD
 app.use('/api/auth', authRoutes);
-=======
 app.use('/api/relatorios', relatorioRoutes);
->>>>>>> 8dfd6d7f1300eb6fce36fd42c7c9c8355c1dae84
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);

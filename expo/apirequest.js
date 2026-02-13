@@ -304,13 +304,63 @@ export const saveReport = async (data) => {
 };
 
 // ============================================================
+// INVENTÁRIO DE CARBONO
+// ============================================================
+
+/**
+ * Gerar inventário completo de carbono (fluxo de 3 etapas)
+ * @param {string} userId - ID do usuário
+ */
+export const generateInventory = async (userId) => {
+  try {
+    const response = await api.post('/ai/inventory', { userId });
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao gerar inventário:", error);
+    throw error;
+  }
+};
+
+// ============================================================
+// RELATÓRIOS
+// ============================================================
+
+/**
+ * Buscar relatórios do usuário
+ * @param {string} userId - ID do usuário
+ */
+export const getRelatoriosByUser = async (userId) => {
+  try {
+    const response = await api.get(`/relatorios/usuario/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar relatórios:", error);
+    throw error;
+  }
+};
+
+/**
+ * Buscar relatório por ID
+ * @param {string} relatorioId - ID do relatório
+ */
+export const getRelatorioById = async (relatorioId) => {
+  try {
+    const response = await api.get(`/relatorios/${relatorioId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar relatório:", error);
+    throw error;
+  }
+};
+
+// ============================================================
 // FUNÇÕES DE COMPATIBILIDADE (LEGACY)
 // ============================================================
 
-// Para manter compatibilidade com código antigo, mantemos alguns aliases
-export const loginUser = getUserByEmail; // Login agora usa busca por email
+export const loginUser = getUserByEmail;
+export const getUserByCar = getUserByCAR; // Alias usado no Login.jsx
 export const getPropriedadeData = getPropriedadesByOwner;
-export const submitQuestionario = createPropriedade; // Questionário agora cria propriedade
+export const submitQuestionario = createPropriedade;
 export const getSateliteData = getSateliteImageWithPolygon;
 export const getRelatorioFinal = analyzeImageWithAI;
 

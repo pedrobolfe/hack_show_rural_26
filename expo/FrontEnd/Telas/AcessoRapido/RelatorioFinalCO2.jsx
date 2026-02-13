@@ -1,175 +1,313 @@
-import { SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold, useFonts } from '@expo-google-fonts/space-grotesk';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import * as SplashScreen from 'expo-splash-screen';
-import { useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    Dimensions,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  Share
 } from 'react-native';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { auth } from '../../../firebaseConfig';
+import { generateInventory, getRelatorioById, getUserByEmail } from '../../../apirequest';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Mantém a splash screen visível enquanto as fontes carregam
-SplashScreen.preventAutoHideAsync();
+export default function RelatorioFinalCO2({ navigation, route, userData: initialUserData }) {
+  const [user, setUser] = useState(initialUserData || null);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [relatorio, setRelatorio] = useState(null);
+  const [etapa1, setEtapa1] = useState(null);
+  const [inventarioFinal, setInventarioFinal] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-const { width } = Dimensions.get('window');
+  // Verificar se veio para visualizar um relatório existente
+  const viewExisting = route?.params?.viewExisting;
+  const relatorioId = route?.params?.relatorioId;
 
-export default function PotentialReport() {
-  const [fontsLoaded] = useFonts({
-    SpaceGrotesk_400Regular,
-    SpaceGrotesk_500Medium,
-    SpaceGrotesk_600SemiBold,
-    SpaceGrotesk_700Bold,
-  });
+  useEffect(() => {
+    const init = async () => {
+      // Carregar dados do usuário se não tiver
+      if (!user) {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          try {
+            const apiUser = await getUserByEmail(currentUser.email);
+            const data = apiUser?.data || apiUser;
+            setUser(data);
+          } catch {
+            try {
+              const cached = await AsyncStorage.getItem(`user_${currentUser.uid}`);
+              if (cached) setUser(JSON.parse(cached));
+            } catch {}
+          }
+        }
+      }
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
+      // Se veio para visualizar relatório existente, buscar
+      if (viewExisting && relatorioId) {
+        try {
+          const resp = await getRelatorioById(relatorioId);
+          const data = resp?.data || resp;
+          setRelatorio(data);
+          // Tentar parsear o conteúdo do relatório
+          if (data?.response) {
+            setInventarioFinal(data.response);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar relatório:', error);
+          setErrorMsg('Não foi possível carregar o relatório.');
+        }
+      }
+
+      setLoading(false);
+    };
+
+    init();
+  }, []);
+
+  const handleGenerateInventory = async () => {
+    if (!user?.id) {
+      Alert.alert('Erro', 'Dados do usuário não encontrados. Faça login novamente.');
+      return;
     }
-  }, [fontsLoaded]);
 
-  if (!fontsLoaded) {
-    return null;
+    const hasAnswered = user?.questionsAndResponses && user.questionsAndResponses.length > 0;
+    if (!hasAnswered) {
+      Alert.alert(
+        'Questionário Pendente',
+        'Você precisa responder o questionário antes de gerar o relatório.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Responder Agora', onPress: () => navigation.navigate('Questionario') }
+        ]
+      );
+      return;
+    }
+
+    setGenerating(true);
+    setErrorMsg(null);
+
+    try {
+      const result = await generateInventory(user.id);
+
+      if (result?.success) {
+        setEtapa1(result.etapa1_analise_imagem || null);
+        setInventarioFinal(result.inventario_final || null);
+        setRelatorio({
+          id: result.relatorioId,
+          response: result.inventario_final,
+          createdAt: result.timestamp || new Date().toISOString(),
+        });
+
+        Alert.alert('Sucesso!', 'Seu inventário de carbono foi gerado e salvo com sucesso.');
+      } else {
+        throw new Error(result?.error || 'Erro desconhecido');
+      }
+    } catch (error) {
+      console.error('Erro ao gerar inventário:', error);
+      const msg = error?.response?.data?.detalhes || error?.message || 'Erro desconhecido';
+      setErrorMsg(`Erro ao gerar inventário: ${msg}`);
+      Alert.alert('Erro', `Não foi possível gerar o inventário.\n\n${msg}`);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!inventarioFinal) return;
+    try {
+      await Share.share({
+        message: inventarioFinal,
+        title: 'Inventário de Carbono - Ecodex',
+      });
+    } catch {}
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.mainContainer, styles.centered]}>
+        <ActivityIndicator size="large" color="#06402B" />
+      </View>
+    );
   }
 
   return (
-    <View style={styles.mainContainer} onLayout={onLayoutRootView}>
+    <View style={styles.mainContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* --- Header Fixo --- */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back" size={24} color="#3F3F46" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Relatório de Potencial</Text>
+        <Text style={styles.headerTitle}>Inventário de Carbono</Text>
+        {inventarioFinal && (
+          <TouchableOpacity onPress={handleShare}>
+            <MaterialIcons name="share" size={24} color="#06402B" />
+          </TouchableOpacity>
+        )}
       </View>
 
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent} 
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        
-        {/* --- Card de Destaque (Verde) --- */}
-        <View style={styles.heroCard}>
-          {/* Decorative Blurs */}
-          <View style={[styles.blurCircle, styles.blurTopRight]} />
-          <View style={[styles.blurCircle, styles.blurBottomLeft]} />
 
-          {/* Badge de Status */}
-          <View style={styles.statusBadge}>
-            <MaterialCommunityIcons name="lightning-bolt" size={18} color="#6EE7B7" />
-            <Text style={styles.statusText}>Potencial Estimado</Text>
+        {/* Nenhum relatório gerado ainda */}
+        {!inventarioFinal && !generating && !errorMsg && (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconContainer}>
+              <MaterialCommunityIcons name="file-document-edit-outline" size={64} color="#D4D4D8" />
+            </View>
+            <Text style={styles.emptyTitle}>Gerar Inventário</Text>
+            <Text style={styles.emptySubtitle}>
+              Clique no botão abaixo para gerar seu inventário de carbono baseado em análise de imagem de satélite e suas respostas do questionário.
+            </Text>
+
+            <TouchableOpacity style={styles.generateButton} onPress={handleGenerateInventory}>
+              <MaterialCommunityIcons name="lightning-bolt" size={24} color="#FFFFFF" />
+              <Text style={styles.generateButtonText}>Gerar Inventário de Carbono</Text>
+            </TouchableOpacity>
           </View>
+        )}
 
-          {/* Valor Principal */}
-          <View style={styles.heroValueContainer}>
-            <Text style={styles.heroValue}>1.234</Text>
-            <Text style={styles.heroUnit}>tCO2e/ano</Text>
-          </View>
+        {/* Gerando... */}
+        {generating && (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color="#06402B" style={{ marginBottom: 24 }} />
+            <Text style={styles.emptyTitle}>Gerando Inventário...</Text>
+            <Text style={styles.emptySubtitle}>
+              Estamos analisando a imagem de satélite da sua propriedade e cruzando com os dados do seu questionário. Isso pode levar alguns segundos.
+            </Text>
 
-          {/* Badge Inferior */}
-          <View style={styles.confidenceBadge}>
-            <Text style={styles.confidenceText}>Alta Confiabilidade (98%)</Text>
-          </View>
-        </View>
-
-        {/* --- Seção de Impacto Ambiental --- */}
-        <View style={styles.impactSection}>
-          <Text style={styles.sectionTitle}>Impacto Ambiental</Text>
-
-          {/* Card Branco com Métricas */}
-          <View style={styles.metricsCard}>
-            
-            {/* Linha 1: Preservação */}
-            <View style={styles.metricRow}>
-              <View style={styles.metricLabelContainer}>
-                <Text style={styles.metricLabel}>Preservação</Text>
-                <Text style={styles.metricValue}>81.3%</Text>
+            {/* Progress Steps */}
+            <View style={styles.stepsContainer}>
+              <View style={styles.stepRow}>
+                <MaterialIcons name="satellite" size={20} color="#06402B" />
+                <Text style={styles.stepText}>Etapa 1: Análise de imagem de satélite...</Text>
               </View>
-              {/* Barra de Progresso */}
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: '81.3%', backgroundColor: '#10B981' }]} />
+              <View style={styles.stepRow}>
+                <MaterialIcons name="quiz" size={20} color="#A1A1AA" />
+                <Text style={[styles.stepText, { color: '#A1A1AA' }]}>Etapa 2: Cruzamento com questionário</Text>
+              </View>
+              <View style={styles.stepRow}>
+                <MaterialIcons name="description" size={20} color="#A1A1AA" />
+                <Text style={[styles.stepText, { color: '#A1A1AA' }]}>Etapa 3: Geração do inventário final</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Erro */}
+        {errorMsg && !generating && (
+          <View style={styles.errorContainer}>
+            <MaterialIcons name="error-outline" size={48} color="#EF4444" />
+            <Text style={styles.errorText}>{errorMsg}</Text>
+            <TouchableOpacity style={[styles.generateButton, { marginTop: 16 }]} onPress={handleGenerateInventory}>
+              <MaterialIcons name="refresh" size={24} color="#FFFFFF" />
+              <Text style={styles.generateButtonText}>Tentar Novamente</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Etapa 1: Resumo da Análise de Imagem */}
+        {etapa1 && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <MaterialIcons name="satellite" size={20} color="#06402B" />
+              <Text style={styles.sectionTitle}>Análise de Imagem de Satélite</Text>
+            </View>
+            <Text style={styles.sectionContent}>{etapa1}</Text>
+          </View>
+        )}
+
+        {/* Inventário Final */}
+        {inventarioFinal && (
+          <>
+            {/* Hero Card */}
+            <View style={styles.heroCard}>
+              <View style={[styles.blurCircle, styles.blurTopRight]} />
+              <View style={[styles.blurCircle, styles.blurBottomLeft]} />
+
+              <View style={styles.statusBadge}>
+                <MaterialCommunityIcons name="lightning-bolt" size={18} color="#6EE7B7" />
+                <Text style={styles.statusText}>Inventário Gerado</Text>
+              </View>
+
+              <View style={styles.heroValueContainer}>
+                <MaterialCommunityIcons name="leaf" size={48} color="#6EE7B7" />
+                <Text style={styles.heroUnit}>Inventário de Carbono</Text>
+              </View>
+
+              <View style={styles.confidenceBadge}>
+                <Text style={styles.confidenceText}>
+                  {relatorio?.createdAt 
+                    ? `Gerado em ${new Date(relatorio.createdAt).toLocaleDateString('pt-BR')}`
+                    : 'Gerado agora'
+                  }
+                </Text>
               </View>
             </View>
 
-            {/* Linha 2: Recuperação */}
-            <View style={styles.metricRow}>
-               <View style={styles.metricLabelContainer}>
-                <Text style={styles.metricLabel}>Recuperação</Text>
-                <Text style={styles.metricValue}>14.7%</Text>
+            {/* Conteúdo do Relatório */}
+            <View style={styles.reportCard}>
+              <View style={styles.reportHeader}>
+                <MaterialIcons name="description" size={20} color="#06402B" />
+                <Text style={styles.reportTitle}>Relatório Completo</Text>
               </View>
-              {/* Barra de Progresso */}
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: '14.7%', backgroundColor: '#34D399' }]} />
-              </View>
+              <Text style={styles.reportContent}>{inventarioFinal}</Text>
             </View>
 
-            {/* Linha 3: Uso Sustentável */}
-            <View style={styles.metricRow}>
-               <View style={styles.metricLabelContainer}>
-                <Text style={styles.metricLabel}>Uso Sustentável</Text>
-                <Text style={styles.metricValue}>4.0%</Text>
-              </View>
-              {/* Barra de Progresso */}
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: '4%', backgroundColor: '#14B8A6' }]} />
-              </View>
+            {/* Ações */}
+            <View style={styles.actionsContainer}>
+              {/* Gerar novo */}
+              <TouchableOpacity style={styles.actionButton} onPress={handleGenerateInventory}>
+                <View style={styles.actionIconContainer}>
+                  <MaterialIcons name="refresh" size={24} color="#059669" />
+                </View>
+                <View style={styles.actionTextContainer}>
+                  <Text style={styles.actionTitle}>Gerar Novo Inventário</Text>
+                  <Text style={styles.actionSubtitle}>Atualizar análise de carbono</Text>
+                </View>
+                <MaterialIcons name="arrow-forward" size={24} color="#059669" />
+              </TouchableOpacity>
+
+              {/* Compartilhar */}
+              <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+                <View style={styles.actionIconContainer}>
+                  <MaterialIcons name="share" size={24} color="#059669" />
+                </View>
+                <View style={styles.actionTextContainer}>
+                  <Text style={styles.actionTitle}>Compartilhar</Text>
+                  <Text style={styles.actionSubtitle}>Enviar relatório</Text>
+                </View>
+                <MaterialIcons name="arrow-forward" size={24} color="#059669" />
+              </TouchableOpacity>
             </View>
+          </>
+        )}
 
-          </View>
-        </View>
-
-        {/* Espaçamento para o conteúdo não ficar escondido */}
-        <View style={{ height: 160 }} />
+        {/* Spacer */}
+        <View style={{ height: 120 }} />
 
       </ScrollView>
 
-      {/* --- Footer (Botões e Navegação) --- */}
-      {/* Container Absoluto para simular o layout fixo inferior */}
-      <View style={styles.bottomSheetContainer}>
-        
-        {/* Botão de Ação: Gerar Créditos */}
-        <View style={styles.actionButtonContainer}>
-          <TouchableOpacity style={styles.actionButton}>
-             <View style={styles.actionIconContainer}>
-                <MaterialCommunityIcons name="star-four-points" size={24} color="#059669" />
-             </View>
-             <View style={styles.actionTextContainer}>
-               <Text style={styles.actionTitle}>Gerar Créditos</Text>
-               <Text style={styles.actionSubtitle}>Iniciar processo de certificação</Text>
-             </View>
-             <MaterialIcons name="arrow-forward" size={24} color="#059669" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Botão Principal: Finalizar */}
-        <TouchableOpacity style={styles.submitButton}>
-           <Text style={styles.submitButtonText}>Finalizar Cadastro</Text>
-           <MaterialIcons name="check" size={20} color="#FFFFFF" />
+      {/* --- Bottom Nav --- */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity style={styles.submitButton} onPress={() => navigation.navigate('Dashboard')}>
+          <Text style={styles.submitButtonText}>Voltar ao Início</Text>
+          <MaterialIcons name="home" size={20} color="#FFFFFF" />
         </TouchableOpacity>
 
-        {/* Navegação Inferior */}
-        <View style={styles.bottomNav}>
-          <View style={styles.navContent}>
-            <TouchableOpacity style={styles.navItemActive}>
-              <View style={styles.navIconBackground}>
-                <MaterialIcons name="home" size={20} color="#06402B" />
-              </View>
-              <Text style={styles.navTextActive}>Início</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Home Indicator */}
-          <View style={styles.homeIndicatorWrapper}>
-            <View style={styles.homeIndicator} />
-          </View>
+        <View style={styles.homeIndicatorWrapper}>
+          <View style={styles.homeIndicator} />
         </View>
-
       </View>
-
     </View>
   );
 }
@@ -179,7 +317,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FAFAFA',
   },
-  
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   /* Header */
   header: {
     flexDirection: 'row',
@@ -188,27 +330,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 16,
     backgroundColor: '#FFFFFF',
-    // Shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
     zIndex: 10,
   },
   backButton: {
     marginRight: 16,
-    width: 40, 
+    width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    // O CSS original tem um botão com margem negativa ou ajuste fino, simplificado aqui
   },
   headerTitle: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 20,
     lineHeight: 28,
     color: '#06402B',
+    flex: 1,
   },
 
   /* Scroll Content */
@@ -218,7 +365,132 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
-  /* Hero Card (Verde) */
+  /* Empty State */
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 48,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#F4F4F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 22,
+    color: '#27272A',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 14,
+    color: '#71717A',
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: 16,
+    marginBottom: 32,
+  },
+  generateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#06402B',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    gap: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#064E3B',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 15,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  generateButtonText: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+
+  /* Steps */
+  stepsContainer: {
+    width: '100%',
+    gap: 16,
+    marginTop: 32,
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+  },
+  stepText: {
+    fontFamily: 'SpaceGrotesk_500Medium',
+    fontSize: 14,
+    color: '#06402B',
+  },
+
+  /* Error */
+  errorContainer: {
+    alignItems: 'center',
+    paddingVertical: 48,
+  },
+  errorText: {
+    fontFamily: 'SpaceGrotesk_500Medium',
+    fontSize: 14,
+    color: '#EF4444',
+    textAlign: 'center',
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+
+  /* Section Card */
+  sectionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#F4F4F5',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 16,
+    color: '#06402B',
+  },
+  sectionContent: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 13,
+    color: '#52525B',
+    lineHeight: 20,
+  },
+
+  /* Hero Card */
   heroCard: {
     backgroundColor: '#06402B',
     borderRadius: 24,
@@ -227,13 +499,18 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     position: 'relative',
     overflow: 'hidden',
-    // Shadow
-    shadowColor: '#06402B',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 8,
-    minHeight: 234, // Conforme CSS
+    ...Platform.select({
+      ios: {
+        shadowColor: '#06402B',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.2,
+        shadowRadius: 15,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+    minHeight: 200,
   },
   blurCircle: {
     position: 'absolute',
@@ -272,20 +549,13 @@ const styles = StyleSheet.create({
   heroValueContainer: {
     alignItems: 'center',
     marginBottom: 24,
-  },
-  heroValue: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 36,
-    lineHeight: 40,
-    color: '#FFFFFF',
-    letterSpacing: -0.9,
+    gap: 12,
   },
   heroUnit: {
-    fontFamily: 'SpaceGrotesk_500Medium',
-    fontSize: 24,
-    lineHeight: 32,
+    fontFamily: 'SpaceGrotesk_600SemiBold',
+    fontSize: 20,
+    lineHeight: 28,
     color: '#6EE7B7',
-    letterSpacing: -0.9,
   },
   confidenceBadge: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -294,7 +564,7 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     paddingVertical: 4,
     paddingHorizontal: 12,
-    marginTop: 'auto', // Empurra para baixo se houver espaço extra
+    marginTop: 'auto',
   },
   confidenceText: {
     fontFamily: 'SpaceGrotesk_500Medium',
@@ -302,77 +572,50 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  /* Impact Section */
-  impactSection: {
-    gap: 16,
-  },
-  sectionTitle: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 18,
-    lineHeight: 28,
-    color: '#27272A',
-    marginBottom: 16,
-  },
-  metricsCard: {
+  /* Report Card */
+  reportCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 20,
+    marginBottom: 24,
     borderWidth: 1,
     borderColor: '#F4F4F5',
-    // Shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    gap: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  metricRow: {
-    gap: 6,
-  },
-  metricLabelContainer: {
+  reportHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F4F4F5',
   },
-  metricLabel: {
-    fontFamily: 'SpaceGrotesk_500Medium',
-    fontSize: 14,
-    color: '#52525B',
-  },
-  metricValue: {
+  reportTitle: {
     fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 14,
+    fontSize: 18,
     color: '#06402B',
   },
-  progressBarBg: {
-    width: '100%',
-    height: 12,
-    backgroundColor: '#F4F4F5',
-    borderRadius: 9999,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 9999,
+  reportContent: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 13,
+    color: '#3F3F46',
+    lineHeight: 22,
   },
 
-  /* Bottom Sheet Container (Action Button + Submit + Nav) */
-  bottomSheetContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF', // Fundo branco cobrindo o scroll
-    borderTopWidth: 1,
-    borderTopColor: '#F4F4F5',
-    paddingTop: 16,
-    paddingHorizontal: 24,
-  },
-
-  /* Action Button (Verde Claro) */
-  actionButtonContainer: {
-    marginBottom: 16,
+  /* Actions */
+  actionsContainer: {
+    gap: 12,
   },
   actionButton: {
     backgroundColor: '#ECFDF5',
@@ -391,12 +634,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    // Shadow leve
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
   actionTextContainer: {
     flex: 1,
@@ -412,7 +660,19 @@ const styles = StyleSheet.create({
     color: '#71717A',
   },
 
-  /* Submit Button (Verde Escuro) */
+  /* Bottom Section */
+  bottomNav: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F4F4F5',
+    paddingTop: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+  },
   submitButton: {
     width: '100%',
     height: 56,
@@ -423,51 +683,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 16,
-    // Shadow
-    shadowColor: '#064E3B',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#064E3B',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 15,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   submitButtonText: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 16,
     color: '#FFFFFF',
-  },
-
-  /* Bottom Nav */
-  bottomNav: {
-    paddingBottom: 32, // Safe area padding
-    alignItems: 'center',
-  },
-  navContent: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  navItemActive: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(6, 64, 43, 0.05)',
-    paddingVertical: 8,
-    paddingHorizontal: 24,
-    borderRadius: 9999,
-    width: 161,
-    gap: 8,
-  },
-  navIconBackground: {
-    width: 32,
-    height: 32,
-    backgroundColor: 'rgba(6, 64, 43, 0.1)',
-    borderRadius: 9999,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  navTextActive: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 14,
-    color: '#06402B',
   },
   homeIndicatorWrapper: {
     alignItems: 'center',

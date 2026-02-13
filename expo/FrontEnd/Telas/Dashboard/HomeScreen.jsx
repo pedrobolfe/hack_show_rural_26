@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -7,91 +7,165 @@ import {
   TouchableOpacity, 
   Dimensions,
   Platform,
-  StatusBar
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+  RefreshControl
 } from 'react-native';
-import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import * as SplashScreen from 'expo-splash-screen';
+import { auth } from '../../../firebaseConfig';
+import { getUserByEmail, getRelatoriosByUser } from '../../../apirequest';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Mantém a splash screen visível enquanto as fontes carregam
-SplashScreen.preventAutoHideAsync();
+const { width } = Dimensions.get('window');
 
-const { width, height } = Dimensions.get('window');
+export default function Dashboard({ navigation, userData: initialUserData }) {
+  const [user, setUser] = useState(initialUserData || null);
+  const [relatorios, setRelatorios] = useState([]);
+  const [loading, setLoading] = useState(!initialUserData);
+  const [refreshing, setRefreshing] = useState(false);
 
-export default function Dashboard() {
-  const [fontsLoaded] = useFonts({
-    SpaceGrotesk_400Regular,
-    SpaceGrotesk_500Medium,
-    SpaceGrotesk_600SemiBold,
-    SpaceGrotesk_700Bold,
-  });
+  const hasAnsweredQuestions = user?.questionsAndResponses && user.questionsAndResponses.length > 0;
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
+  const loadData = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    try {
+      const apiUser = await getUserByEmail(currentUser.email);
+      const data = apiUser?.data || apiUser;
+      setUser(data);
+      await AsyncStorage.setItem(`user_${currentUser.uid}`, JSON.stringify(data));
+
+      // Buscar relatórios do usuário
+      if (data?.id) {
+        try {
+          const resp = await getRelatoriosByUser(data.id);
+          const lista = resp?.data || resp || [];
+          setRelatorios(Array.isArray(lista) ? lista : []);
+        } catch {
+          setRelatorios([]);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      try {
+        const cached = await AsyncStorage.getItem(`user_${currentUser.uid}`);
+        if (cached) setUser(JSON.parse(cached));
+      } catch {}
+    } finally {
+      setLoading(false);
     }
-  }, [fontsLoaded]);
+  };
 
-  if (!fontsLoaded) {
-    return null;
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Atualizar quando voltar de outra tela
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadData();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
+  const handleNavigateToQuestionario = () => {
+    navigation.navigate('Questionario');
+  };
+
+  const handleNavigateToRelatorio = () => {
+    if (!hasAnsweredQuestions) {
+      Alert.alert(
+        'Questionário Pendente',
+        'Você precisa responder o questionário de inventário antes de gerar o relatório.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Responder Agora', onPress: () => navigation.navigate('Questionario') }
+        ]
+      );
+      return;
+    }
+    navigation.navigate('Relatorio');
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#06402B" />
+      </View>
+    );
   }
 
+  const userName = user?.name?.split(' ')[0] || 'Produtor';
+
   return (
-    <View style={styles.container} onLayout={onLayoutRootView}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
       
-      {/* Scrollable Content */}
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#06402B']} />}
       >
         
         {/* --- Header Section --- */}
         <View style={styles.header}>
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerSubtitle}>Bem-vindo de volta,</Text>
-            <Text style={styles.headerTitle}>Willyan Walker</Text>
+            <Text style={styles.headerTitle}>{userName}</Text>
           </View>
-          <TouchableOpacity style={styles.notificationButton}>
-            <MaterialIcons name="notifications-none" size={24} color="#3F3F46" />
-            <View style={styles.notificationBadge} />
+          <TouchableOpacity style={styles.notificationButton} onPress={() => navigation.navigate('Perfil')}>
+            <MaterialIcons name="person" size={24} color="#3F3F46" />
           </TouchableOpacity>
         </View>
 
-        {/* --- Green Hero Card --- */}
-        <View style={styles.card}>
-          {/* Decorative Blurs */}
-          <View style={[styles.blurCircle, styles.blurTopRight]} />
-          <View style={[styles.blurCircle, styles.blurBottomLeft]} />
-
-          {/* Card Header */}
-          <View style={styles.cardHeader}>
-            <View style={styles.cardLabelContainer}>
-              <Text style={styles.cardLabel}>Saldo de Carbono</Text>
-              <MaterialIcons name="info-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
+        {/* --- Banner de Status --- */}
+        {!hasAnsweredQuestions ? (
+          <TouchableOpacity style={styles.warningBanner} onPress={handleNavigateToQuestionario}>
+            <View style={styles.warningIconContainer}>
+              <MaterialIcons name="warning" size={24} color="#F59E0B" />
             </View>
-          </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.warningTitle}>Questionário Pendente</Text>
+              <Text style={styles.warningSubtitle}>Responda para gerar seu inventário de carbono</Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color="#F59E0B" />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.card}>
+            {/* Decorative Blurs */}
+            <View style={[styles.blurCircle, styles.blurTopRight]} />
+            <View style={[styles.blurCircle, styles.blurBottomLeft]} />
 
-          {/* Card Value */}
-          <View style={styles.cardValueContainer}>
-            <Text style={styles.cardValue}>1.234</Text>
-            <View style={styles.cardChangeContainer}>
-              <Text style={styles.cardChangeText}>tCO2e</Text>
-              <View style={styles.percentBadge}>
-                 <MaterialIcons name="arrow-upward" size={12} color="#6EE7B7" />
-                 <Text style={styles.percentText}>+12%</Text>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardLabelContainer}>
+                <Text style={styles.cardLabel}>Inventário de Carbono</Text>
+                <MaterialIcons name="check-circle" size={20} color="#6EE7B7" />
               </View>
             </View>
-          </View>
 
-          {/* Card Footer/Actions */}
-          <View style={styles.cardFooter}>
-             <Text style={styles.lastUpdate}>Atualizado hoje, 09:41</Text>
-             <TouchableOpacity style={styles.extractButton}>
-                <Text style={styles.extractButtonText}>Ver extrato</Text>
-             </TouchableOpacity>
+            <View style={styles.cardValueContainer}>
+              <Text style={styles.cardValue}>{relatorios.length}</Text>
+              <View style={styles.cardChangeContainer}>
+                <Text style={styles.cardChangeText}>{relatorios.length === 1 ? 'relatório' : 'relatórios'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.cardFooter}>
+              <Text style={styles.lastUpdate}>Questionário respondido ✅</Text>
+              <TouchableOpacity style={styles.extractButton} onPress={handleNavigateToRelatorio}>
+                <Text style={styles.extractButtonText}>Gerar novo</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* --- Quick Access Label --- */}
         <Text style={styles.sectionTitle}>Acesso Rápido</Text>
@@ -99,104 +173,84 @@ export default function Dashboard() {
         {/* --- Action Grid --- */}
         <View style={styles.gridContainer}>
           
-          {/* Button 1: Vender */}
-          <TouchableOpacity style={styles.gridButton}>
-            <View style={[styles.iconBox, { backgroundColor: '#ECFDF5' }]}>
-              <MaterialIcons name="monetization-on" size={24} color="#06402B" />
+          {/* Button 1: Questionário */}
+          <TouchableOpacity style={styles.gridButton} onPress={handleNavigateToQuestionario}>
+            <View style={[styles.iconBox, { backgroundColor: hasAnsweredQuestions ? '#ECFDF5' : '#FEF3C7' }]}>
+              <MaterialIcons name="assignment" size={24} color={hasAnsweredQuestions ? '#06402B' : '#F59E0B'} />
             </View>
-            <Text style={styles.gridButtonTitle}>Vender Créditos</Text>
+            <Text style={styles.gridButtonTitle}>{hasAnsweredQuestions ? 'Editar Inventário' : 'Questionário'}</Text>
           </TouchableOpacity>
 
-          {/* Button 2: Minhas Áreas */}
-          <TouchableOpacity style={styles.gridButton}>
+          {/* Button 2: Gerar Relatório */}
+          <TouchableOpacity style={styles.gridButton} onPress={handleNavigateToRelatorio}>
             <View style={[styles.iconBox, { backgroundColor: '#ECFDF5' }]}>
-              <MaterialIcons name="grid-view" size={24} color="#06402B" />
-            </View>
-            <Text style={styles.gridButtonTitle}>Minhas Áreas</Text>
-          </TouchableOpacity>
-
-          {/* Button 3: Nova Área */}
-          <TouchableOpacity style={styles.gridButton}>
-            <View style={[styles.iconBox, { backgroundColor: '#ECFDF5' }]}>
-              <MaterialIcons name="add-circle-outline" size={24} color="#06402B" />
-            </View>
-            <Text style={styles.gridButtonTitle}>Nova Área</Text>
-          </TouchableOpacity>
-
-          {/* Button 4: Relatórios */}
-          <TouchableOpacity style={styles.gridButton}>
-             <View style={[styles.iconBox, { backgroundColor: '#ECFDF5' }]}>
               <MaterialIcons name="description" size={24} color="#06402B" />
             </View>
-            <Text style={styles.gridButtonTitle}>Relatórios</Text>
+            <Text style={styles.gridButtonTitle}>Gerar Relatório</Text>
+          </TouchableOpacity>
+
+          {/* Button 3: Meus Relatórios */}
+          <TouchableOpacity style={styles.gridButton} onPress={() => {
+            if (relatorios.length > 0) {
+              navigation.navigate('Relatorio', { viewExisting: true, relatorioId: relatorios[0]?.id });
+            } else {
+              Alert.alert('Sem Relatórios', 'Você ainda não possui relatórios gerados.');
+            }
+          }}>
+            <View style={[styles.iconBox, { backgroundColor: '#ECFDF5' }]}>
+              <MaterialCommunityIcons name="file-document-multiple" size={24} color="#06402B" />
+            </View>
+            <Text style={styles.gridButtonTitle}>Meus Relatórios</Text>
+          </TouchableOpacity>
+
+          {/* Button 4: Perfil */}
+          <TouchableOpacity style={styles.gridButton} onPress={() => navigation.navigate('Perfil')}>
+            <View style={[styles.iconBox, { backgroundColor: '#ECFDF5' }]}>
+              <MaterialIcons name="person" size={24} color="#06402B" />
+            </View>
+            <Text style={styles.gridButtonTitle}>Perfil</Text>
           </TouchableOpacity>
 
         </View>
 
-        {/* --- Recent Activity Section --- */}
-        <View style={styles.activitySection}>
-          
-          {/* Activity Header */}
-          <View style={styles.activityHeader}>
-            <Text style={styles.activityTitle}>Atividades Recentes</Text>
-            <View style={styles.activityFilters}>
-              <TouchableOpacity style={styles.filterActive}>
-                <Text style={styles.filterActiveText}>Todos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.filterInactive}>
-                <Text style={styles.filterInactiveText}>Vendas</Text>
-              </TouchableOpacity>
+        {/* --- Relatórios Recentes --- */}
+        {relatorios.length > 0 && (
+          <View style={styles.activitySection}>
+            <View style={styles.activityHeader}>
+              <Text style={styles.activityTitle}>Relatórios Recentes</Text>
             </View>
+
+            <View style={styles.divider} />
+
+            {relatorios.slice(0, 3).map((rel, index) => (
+              <React.Fragment key={rel.id || index}>
+                <TouchableOpacity 
+                  style={styles.activityItem}
+                  onPress={() => navigation.navigate('Relatorio', { viewExisting: true, relatorioId: rel.id })}
+                >
+                  <View style={styles.activityLeft}>
+                    <View style={styles.activityIconContainer}>
+                      <MaterialCommunityIcons name="leaf" size={24} color="#52525B" />
+                    </View>
+                    <View>
+                      <Text style={styles.activityItemTitle}>Inventário de Carbono</Text>
+                      <Text style={styles.activityItemSubtitle}>
+                        {rel.createdAt ? new Date(rel.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível'}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.activityRight}>
+                    <MaterialIcons name="chevron-right" size={24} color="#A1A1AA" />
+                  </View>
+                </TouchableOpacity>
+                {index < Math.min(relatorios.length, 3) - 1 && <View style={styles.divider} />}
+              </React.Fragment>
+            ))}
           </View>
+        )}
 
-          <View style={styles.divider} />
-
-          {/* Activity Item 1 */}
-          <View style={styles.activityItem}>
-            <View style={styles.activityLeft}>
-              <View style={styles.activityIconContainer}>
-                <MaterialCommunityIcons name="leaf" size={24} color="#52525B" />
-              </View>
-              <View>
-                <Text style={styles.activityItemTitle}>Venda de Crédito</Text>
-                <Text style={styles.activityItemSubtitle}>Projeto Mata Atlântica</Text>
-              </View>
-            </View>
-            <View style={styles.activityRight}>
-              <Text style={styles.activityValuePositive}>+ 120 t</Text>
-              <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end'}}>
-                 <MaterialIcons name="arrow-upward" size={10} color="#16A34A" />
-                 <Text style={styles.activityStatusPositive}>Concluído</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          {/* Activity Item 2 */}
-          <View style={styles.activityItem}>
-             <View style={styles.activityLeft}>
-              <View style={styles.activityIconContainer}>
-                <MaterialIcons name="assignment-turned-in" size={24} color="#52525B" />
-              </View>
-              <View>
-                <Text style={styles.activityItemTitle}>Certificação</Text>
-                <Text style={styles.activityItemSubtitle}>Área Norte #04</Text>
-              </View>
-            </View>
-            <View style={styles.activityRight}>
-              <Text style={styles.activityValueNegative}>- R$ 450</Text>
-              <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end'}}>
-                 <MaterialIcons name="access-time" size={10} color="#EF4444" />
-                 <Text style={styles.activityStatusNegative}>Pendente</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Spacer for Bottom Nav */}
-          <View style={{height: 100}} />
-
-        </View>
+        {/* Spacer for Bottom Nav */}
+        <View style={{ height: 120 }} />
 
       </ScrollView>
 
@@ -213,15 +267,15 @@ export default function Dashboard() {
           </TouchableOpacity>
           
           {/* Inactive Items */}
-          <TouchableOpacity style={styles.navItem}>
-            <MaterialIcons name="pie-chart-outline" size={24} color="#A1A1AA" />
+          <TouchableOpacity style={styles.navItem} onPress={handleNavigateToQuestionario}>
+            <MaterialIcons name="assignment" size={24} color="#A1A1AA" />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.navItem}>
-             <MaterialIcons name="qr-code-scanner" size={24} color="#A1A1AA" />
+          <TouchableOpacity style={styles.navItem} onPress={handleNavigateToRelatorio}>
+             <MaterialIcons name="description" size={24} color="#A1A1AA" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.navItem}>
+          <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Perfil')}>
              <MaterialIcons name="person-outline" size={24} color="#A1A1AA" />
           </TouchableOpacity>
 
@@ -251,7 +305,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 60, // Top margin
+    marginTop: 60,
     marginBottom: 24,
     height: 52,
   },
@@ -278,16 +332,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  notificationBadge: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#EF4444',
-    borderWidth: 1.5,
-    borderColor: '#F4F4F5',
+
+  /* Warning Banner */
+  warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    gap: 12,
+  },
+  warningIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#FEF3C7',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  warningTitle: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 14,
+    color: '#92400E',
+  },
+  warningSubtitle: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 12,
+    color: '#B45309',
+    marginTop: 2,
   },
 
   /* Green Hero Card */
@@ -299,8 +374,17 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     position: 'relative',
     overflow: 'hidden',
-    boxShadow: '0px 10px 15px rgba(6, 64, 43, 0.2)',
-    elevation: 8, // Mantido para Android
+    ...Platform.select({
+      ios: {
+        shadowColor: '#06402B',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.2,
+        shadowRadius: 15,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   blurCircle: {
     position: 'absolute',
@@ -351,28 +435,13 @@ const styles = StyleSheet.create({
   cardChangeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingBottom: 6, // Align visually with text baseline
+    paddingBottom: 6,
     gap: 8,
   },
   cardChangeText: {
     fontFamily: 'SpaceGrotesk_500Medium',
     fontSize: 18,
     color: 'rgba(255, 255, 255, 0.9)',
-  },
-  percentBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(110, 231, 183, 0.2)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    marginLeft: 4,
-  },
-  percentText: {
-    fontFamily: 'SpaceGrotesk_500Medium',
-    fontSize: 12,
-    color: '#6EE7B7',
-    marginLeft: 2,
   },
   cardFooter: {
     flexDirection: 'row',
@@ -411,11 +480,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 16, // Row gap
+    gap: 16,
     marginBottom: 32,
   },
   gridButton: {
-    width: (width - 48 - 16) / 2, // Width minus padding minus gap divided by 2
+    width: (width - 48 - 16) / 2,
     height: 126,
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
@@ -424,8 +493,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
-    elevation: 2, // Mantido para Android
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   iconBox: {
     width: 48,
@@ -437,7 +515,7 @@ const styles = StyleSheet.create({
   },
   gridButtonTitle: {
     fontFamily: 'SpaceGrotesk_600SemiBold',
-    fontSize: 16,
+    fontSize: 14,
     color: '#3F3F46',
     textAlign: 'center',
   },
@@ -449,47 +527,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F4F4F5',
     padding: 20,
-    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
-    elevation: 2, // Mantido para Android
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   activityHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   activityTitle: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 18,
     color: '#27272A',
-  },
-  activityFilters: {
-    flexDirection: 'row',
-    backgroundColor: '#F4F4F5',
-    borderRadius: 12,
-    padding: 4,
-  },
-  filterActive: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
-    elevation: 1, // Mantido para Android
-  },
-  filterActiveText: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 12,
-    color: '#06402B',
-  },
-  filterInactive: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-  },
-  filterInactiveText: {
-    fontFamily: 'SpaceGrotesk_500Medium',
-    fontSize: 12,
-    color: '#71717A',
   },
   divider: {
     height: 1,
@@ -500,12 +559,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 40,
+    paddingVertical: 4,
   },
   activityLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   activityIconContainer: {
     width: 40,
@@ -530,30 +590,6 @@ const styles = StyleSheet.create({
   activityRight: {
     alignItems: 'flex-end',
   },
-  activityValuePositive: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 16,
-    color: '#27272A',
-    marginBottom: 2,
-  },
-  activityValueNegative: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 16,
-    color: '#27272A',
-    marginBottom: 2,
-  },
-  activityStatusPositive: {
-    fontFamily: 'SpaceGrotesk_500Medium',
-    fontSize: 10, // Adjusted from 12 to fit design
-    color: '#16A34A',
-    marginLeft: 4,
-  },
-  activityStatusNegative: {
-    fontFamily: 'SpaceGrotesk_500Medium',
-    fontSize: 10,
-    color: '#EF4444',
-    marginLeft: 4,
-  },
 
   /* Bottom Nav */
   bottomNav: {
@@ -565,7 +601,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F4F4F5',
     paddingTop: 16,
-    paddingBottom: 32, // Safe Area padding roughly
+    paddingBottom: 32,
     paddingHorizontal: 24,
   },
   navContent: {
