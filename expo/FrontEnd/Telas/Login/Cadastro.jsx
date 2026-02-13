@@ -12,7 +12,8 @@ import {
   Alert
 } from 'react-native';
 import { MaterialIcons, AntDesign } from '@expo/vector-icons';
-import api from '../../../apirequest'; // Importa a instância centralizada do Axios
+import { registerUser } from '../../../apirequest'; // Importa a função específica
+import { auth, createUserWithEmailAndPassword } from '../../../firebaseConfig'; // Importa do Firebase
 
 const { width } = Dimensions.get('window');
 
@@ -29,26 +30,35 @@ export default function SignUp({ navigation }) {
     }
 
     try {
-      const response = await api.post('/auth/register', {
-        fullName: nome,
+      // 1. Criar o usuário no Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
+      const firebaseUser = userCredential.user;
+
+      // 2. Salvar informações adicionais no seu backend com o UID do Firebase
+      await registerUser({
+        id: firebaseUser.uid, // Envia o UID do Firebase como id
+        name: nome,
         email: email,
-        car: car,
-        password: senha,
+        numCRA: car,
+        role: 'produtor',
+        userType: 'produtor',
+        // A senha não é enviada para o nosso backend.
       });
 
-      // Com axios, uma resposta bem-sucedida (status 2xx) entra aqui
       Alert.alert('Sucesso', 'Cadastro realizado com sucesso!', [{ text: 'OK', onPress: () => navigation.navigate('Login') }]);
+
     } catch (error) {
       console.error(error);
-      if (error.response) {
-        // O servidor respondeu com um status de erro (4xx, 5xx)
-        Alert.alert('Erro no Cadastro', error.response.data.message || 'Não foi possível completar o cadastro.');
-      } else if (error.request) {
-        // A requisição foi feita mas não houve resposta
-        Alert.alert('Erro de Conexão', 'Não foi possível se conectar ao servidor. Verifique sua conexão e o endereço do backend.');
+      // Trata erros do Firebase e da sua API
+      if (error.code) { // Erro do Firebase
+        if (error.code === 'auth/email-already-in-use') {
+          Alert.alert('Erro no Cadastro', 'Este e-mail já está em uso.');
+        } else {
+          Alert.alert('Erro no Cadastro', 'Ocorreu um erro ao criar a conta no Firebase.');
+        }
       } else {
-        // Algo aconteceu ao configurar a requisição
-        Alert.alert('Erro', 'Ocorreu um erro inesperado.');
+        // Erro da sua API ou outro erro
+        Alert.alert('Erro no Cadastro', 'Não foi possível salvar os dados do usuário no servidor.');
       }
     }
   };
@@ -212,12 +222,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#F4F4F5',
-    // Sombra CSS: 0px 25px 50px -12px rgba(0, 0, 0, 0.25)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 25 },
-    shadowOpacity: 0.25,
-    shadowRadius: 50,
-    elevation: 5,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 25px 50px -12px rgba(0, 0, 0, 0.25)',
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
     alignItems: 'center',
     padding: 0,
     position: 'relative',

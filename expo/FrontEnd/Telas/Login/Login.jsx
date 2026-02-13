@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -7,11 +7,54 @@ import {
   TouchableOpacity, 
   ScrollView, 
   KeyboardAvoidingView, 
-  Platform 
+  Platform,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { MaterialIcons, AntDesign } from '@expo/vector-icons';
+import { auth, signInWithEmailAndPassword } from '../../../firebaseConfig';
+import { getUserByCar } from '../../../apirequest'; // Assumindo que esta função será criada
 
 export default function Login({ navigation }) {
+  const [emailOrCar, setEmailOrCar] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!emailOrCar || !password) {
+      Alert.alert('Erro', 'Por favor, preencha o e-mail/CAR e a senha.');
+      return;
+    }
+    setLoading(true);
+    try {
+      let userEmail = emailOrCar;
+
+      // Verifica se o input é um CAR (não contém '@') e busca o e-mail correspondente.
+      if (!emailOrCar.includes('@')) {
+        console.log(`Buscando usuário pelo CAR: ${emailOrCar}`);
+        const user = await getUserByCar(emailOrCar);
+        if (!user || !user.email) {
+          console.log(`Usuário não encontrado para o CAR: ${emailOrCar}`);
+          throw new Error('Usuário não encontrado com este CAR.');
+        }
+        userEmail = user.email;
+        console.log(`Email encontrado (${userEmail}) para o CAR ${emailOrCar}. Tentando login no Firebase.`);
+      }
+
+      await signInWithEmailAndPassword(auth, userEmail, password);
+      // A navegação será tratada pelo listener em App.js
+    } catch (error) {
+      console.error("Erro no login:", error);
+      if (error.message === 'Usuário não encontrado com este CAR.') {
+        Alert.alert('Erro no Login', error.message);
+      } else {
+        Alert.alert('Erro no Login', 'E-mail/CAR ou senha inválidos. Por favor, tente novamente.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -49,6 +92,9 @@ export default function Login({ navigation }) {
                   style={styles.input} 
                   placeholder="Seu e-mail ou número do CAR"
                   placeholderTextColor="#A1A1AA"
+                  value={emailOrCar}
+                  onChangeText={setEmailOrCar}
+                  autoCapitalize="none"
                 />
               </View>
             </View>
@@ -62,6 +108,8 @@ export default function Login({ navigation }) {
                   placeholder="••••••••"
                   placeholderTextColor="#A1A1AA"
                   secureTextEntry={true}
+                  value={password}
+                  onChangeText={setPassword}
                 />
               </View>
             </View>
@@ -72,8 +120,12 @@ export default function Login({ navigation }) {
             </TouchableOpacity>
 
             {/* Botão Entrar */}
-            <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('Perfil')}>
-              <Text style={styles.loginButtonText}>Entrar</Text>
+            <TouchableOpacity style={[styles.loginButton, loading && styles.buttonDisabled]} onPress={loading ? undefined : handleLogin}>
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.loginButtonText}>Entrar</Text>
+              )}
             </TouchableOpacity>
 
           </View>
@@ -130,15 +182,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#F4F4F5',
-    // Shadow CSS: 0px 25px 50px -12px rgba(0, 0, 0, 0.25)
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 25,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 50,
-    elevation: 5, // Android fallback
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 25px 50px -12px rgba(0, 0, 0, 0.25)',
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
     alignItems: 'center',
     paddingHorizontal: 32,
     paddingTop: 32,
@@ -240,6 +291,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 28,
     color: '#FFFFFF',
+  },
+  buttonDisabled: {
+    backgroundColor: '#0A5F41',
+    opacity: 0.7,
   },
 
   /* Divider Styles */

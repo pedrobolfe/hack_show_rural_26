@@ -42,7 +42,6 @@ async function testarPoligonoDoJSON() {
             jsonPath,
             'poligono_propriedade_1',
             dateFrom,
-            dateTo,
             {
                 width: 1024,
                 height: 1024,
@@ -110,7 +109,6 @@ async function testarVariasOpcoes() {
             jsonPath,
             'poligono_propriedade_1',
             dateFrom,
-            dateTo,
             {
                 width: 800,
                 height: 800,
@@ -136,7 +134,6 @@ async function testarVariasOpcoes() {
             jsonPath,
             'poligono_propriedade_1',
             dateFrom,
-            dateTo,
             {
                 width: 800,
                 height: 800,
@@ -162,7 +159,6 @@ async function testarVariasOpcoes() {
             jsonPath,
             'poligono_propriedade_1',
             dateFrom,
-            dateTo,
             {
                 width: 800,
                 height: 800,

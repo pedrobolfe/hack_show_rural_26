@@ -12,7 +12,8 @@ import {
   Alert
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import api from '../../../apirequest'; // Importa a instância centralizada do Axios
+import { auth, sendPasswordResetEmail } from '../../../firebaseConfig'; // Importa do Firebase
+import { getUserByCar } from '../../../apirequest';
 
 const { width } = Dimensions.get('window');
 
@@ -26,23 +27,29 @@ export default function ForgotPassword({ navigation }) {
     }
 
     try {
-      const response = await api.post('/auth/forgot-password', {
-        emailOrCar: emailOrCar,
-      });
+      let userEmail = emailOrCar;
 
-      // Com axios, uma resposta bem-sucedida (status 2xx) entra aqui
-      Alert.alert('Verifique seu E-mail', 'Se uma conta com este e-mail ou CAR existir, um link para redefinição de senha foi enviado.', [{ text: 'OK', onPress: () => navigation.navigate('Login') }]);
+      // Verifica se o input é um CAR (não contém '@') e busca o e-mail correspondente.
+      if (!emailOrCar.includes('@')) {
+        const user = await getUserByCar(emailOrCar);
+        if (!user || !user.email) {
+          throw new Error('Usuário não encontrado com este CAR.');
+        }
+        userEmail = user.email;
+      }
+
+      await sendPasswordResetEmail(auth, userEmail);
+      Alert.alert(
+        'Verifique seu E-mail', 
+        'Um link para redefinição de senha foi enviado para o seu e-mail.', 
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+      );
     } catch (error) {
-      console.error(error);
-      if (error.response) {
-        // O servidor respondeu com um status de erro (4xx, 5xx)
-        Alert.alert('Erro', error.response.data.message || 'Não foi possível processar sua solicitação.');
-      } else if (error.request) {
-        // A requisição foi feita mas não houve resposta
-        Alert.alert('Erro de Conexão', 'Não foi possível se conectar ao servidor.');
+      console.error("Erro ao enviar e-mail de redefinição:", error);
+      if (error.message === 'Usuário não encontrado com este CAR.') {
+        Alert.alert('Erro', error.message);
       } else {
-        // Algo aconteceu ao configurar a requisição
-        Alert.alert('Erro', 'Ocorreu um erro inesperado.');
+        Alert.alert('Erro', 'Não foi possível processar sua solicitação. Verifique o e-mail ou CAR digitado.');
       }
     }
   };
@@ -169,12 +176,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#F4F4F5',
-    // Shadow: 0px 25px 50px -12px rgba(0, 0, 0, 0.25)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 25 },
-    shadowOpacity: 0.25,
-    shadowRadius: 50,
-    elevation: 10,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 25px 50px -12px rgba(0, 0, 0, 0.25)',
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
     alignItems: 'flex-start',
     padding: 0,
     overflow: 'hidden', // Opcional, dependendo se a sombra deve vazar ou não
@@ -305,12 +314,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    // Button Shadow: 0px 10px 15px -3px rgba(6, 64, 43, 0.2)
-    shadowColor: '#06402B',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 8,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 10px 15px -3px rgba(6, 64, 43, 0.2)',
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
     marginTop: 24, // Gap manual se 'gap' não for suportado na versão
   },
   buttonText: {

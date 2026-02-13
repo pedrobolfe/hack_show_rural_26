@@ -299,12 +299,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     position: 'relative',
     overflow: 'hidden',
-    // Shadows
-    shadowColor: '#06402B',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 8,
+    boxShadow: '0px 10px 15px rgba(6, 64, 43, 0.2)',
+    elevation: 8, // Mantido para Android
   },
   blurCircle: {
     position: 'absolute',
@@ -428,12 +424,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    // Shadows
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+    elevation: 2, // Mantido para Android
   },
   iconBox: {
     width: 48,
@@ -457,11 +449,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F4F4F5',
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+    elevation: 2, // Mantido para Android
   },
   activityHeader: {
     flexDirection: 'row',
@@ -485,11 +474,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 4,
     paddingHorizontal: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+    elevation: 1, // Mantido para Android
   },
   filterActiveText: {
     fontFamily: 'SpaceGrotesk_700Bold',

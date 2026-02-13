@@ -9,9 +9,12 @@ import {
   StatusBar,
   TextInput,
   Image,
-  Alert
+  Alertorm
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { getUserByEmail } from '../../../apirequest'; // Importa a função da API
+import { auth, signOut } from '../../../firebaseConfig'; // Importa funções do Firebase
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -28,33 +31,44 @@ export default function UserProfile({ navigation }) {
 
   // Efeito para buscar os dados do usuário quando o componente é montado
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        // Supondo que o backend tenha uma rota '/api/users/me' para pegar o usuário logado
-        // ou '/api/users/:userId' se o ID for passado via props/context.
-        // Para este exemplo, vamos usar um ID fixo que você pode obter após criar um usuário.
-        const userId = 'USER_ID_DO_PRODUTOR'; // IMPORTANTE: Substituir pelo ID do usuário logado
-        const response = await api.get(`/api/users/${userId}`);
-        setUser(response.data);
-      } catch (error) {
-        console.error("Erro ao buscar dados do usuário:", error);
-        Alert.alert('Erro', 'Não foi possível carregar os dados do perfil.');
-        // Mantém os dados padrão ou limpa
-        setUser({ name: 'Produtor', email: 'Não disponível', phone: 'Não disponível' });
-      } finally {
-        setLoading(false);
+    const loadUserData = async () => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        setLoading(true);
+        try {
+          const userData = await getUserByEmail(currentUser.email);
+          setUser(userData);
+          // Salva os dados frescos no cache
+          await AsyncStorage.setItem(`user_${currentUser.uid}`, JSON.stringify(userData));
+        } catch (apiError) {
+          console.error("Erro ao buscar dados do usuário da API:", apiError);
+          try {
+            // Se a API falhar, tenta carregar do cache
+            const cachedUser = await AsyncStorage.getItem(`user_${currentUser.uid}`);
+            if (cachedUser) {
+              setUser(JSON.parse(cachedUser));
+            } else {
+              throw new Error("Sem dados em cache disponíveis.");
+            }
+          } catch (cacheError) {
+            console.error("Erro ao carregar dados do cache:", cacheError);
+            Alert.alert('Erro Crítico', 'Não foi possível carregar seus dados online ou offline. Por favor, faça login novamente.');
+            auth.signOut();
+          }
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        navigation.replace('Login');
       }
     };
-
-    fetchUserData();
+    loadUserData();
   }, []); // O array vazio garante que o efeito rode apenas uma vez
 
-  const handleLogout = () => {
-    // Aqui iria a lógica de limpar o token de autenticação (ex: de AsyncStorage)
-    // e então navegar para a tela de Login.
+  const handleLogout = async () => {
     Alert.alert('Sair', 'Tem certeza que deseja sair da sua conta?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', onPress: () => navigation.replace('Login') }, // Usa replace para não poder voltar
+      { text: 'Sair', onPress: () => signOut(auth) }, // Desloga o usuário do Firebase
     ]);
   };
 
@@ -168,7 +182,7 @@ export default function UserProfile({ navigation }) {
       <View style={styles.bottomNav}>
         <View style={styles.navContent}>
           {/* Item Inativo: Início */}
-          <TouchableOpacity style={styles.navItemInactive} onPress={() => navigation.navigate('Home')}>
+          <TouchableOpacity style={styles.navItemInactive} onPress={() => navigation.navigate('Dashboard')}>
             <MaterialIcons name="home" size={20} color="#A1A1AA" />
             <Text style={styles.navTextInactive}>Início</Text>
           </TouchableOpacity>
@@ -198,12 +212,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 16,
     backgroundColor: '#FFFFFF',
-    // Shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    ...Platform.select({
+      ,
+      android: {
+        elevation: 2,
+      },
+    }),
     zIndex: 10,
   },
   backButton: {
@@ -249,12 +263,12 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    // Shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 5,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 10px 15px rgba(0, 0, 0, 0.1)',
+       elevation: 5,
+      },
+    }),
   },
   editAvatarButton: {
     position: 'absolute',
@@ -268,12 +282,12 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    // Shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+      },
+      android: {
+    }),
   },
   userName: {
     fontFamily: 'SpaceGrotesk_700Bold',
@@ -329,13 +343,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center', // Center aligned content vs space-between if desired
     alignItems: 'center',
-    // Shadow
-    shadowColor: '#064E3B',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 8,
-    gap: 8,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 10px 15px rgba(6, 78, 59, 0.1)',
+      },
+      android: {
+        elevation: 8,
+      },
   },
   changePasswordText: {
     fontFamily: 'SpaceGrotesk_700Bold',
