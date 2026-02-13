@@ -46,18 +46,13 @@ export class HomeComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set('');
 
-    console.log('📊 Buscando relatórios para usuário:', userId);
-
     this.relatorioService.getRelatoriosByUserId(userId).subscribe({
       next: (relatorios) => {
-        console.log('✅ Relatórios carregados:', relatorios);
         this.relatorios.set(relatorios);
         this.loading.set(false);
       },
       error: (error) => {
-        console.error('❌ Erro ao carregar relatórios:', error);
         this.loading.set(false);
-        // Não mostrar erro se for apenas porque a coleção não existe
         if (error.code !== 'not-found' && error.code !== 'permission-denied') {
           this.errorMessage.set('Erro ao carregar relatórios');
         }
@@ -66,7 +61,7 @@ export class HomeComponent implements OnInit {
   }
 
   downloadRelatorio(relatorio: IRelatorio): void {
-    this.relatorioService.downloadRelatorio(relatorio);
+    this.relatorioService.downloadRelatorioPDF(relatorio);
   }
 
   getStatusBadgeClass(status: string): string {

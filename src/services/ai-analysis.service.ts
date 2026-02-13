@@ -122,7 +122,7 @@ class AIAnalysisService {
         };
 
         const promptCompleto = `
-        Você é um especialista em inventário de gases de efeito estufa (GEE), com base nas metodologias do IPCC (2006 Guidelines for National Greenhouse Gas Inventories), GHG Protocol e boas práticas de MRV.
+Você é um especialista em inventário de gases de efeito estufa (GEE), com base nas metodologias do IPCC (2006 Guidelines for National Greenhouse Gas Inventories), GHG Protocol e boas práticas de MRV.
 
 Analise a imagem de satélite fornecida para a propriedade rural na seguinte localização:
 
@@ -131,6 +131,15 @@ Entradas fornecidas:
 - Longitude: ${longitude}
 - Área total: ${areaTotal} hectares
 - Imagem em anexo
+
+IMPORTANTE: Considere TODOS os gases de efeito estufa (GEE) na análise:
+• CO₂ (dióxido de carbono) - emissões por combustíveis, queima de resíduos
+• N₂O (óxido nitroso) - principal emissor em solos agrícolas, fertilizantes nitrogenados
+• CH₄ (metano) - fermentação entérica, manejo de resíduos orgânicos, solos alagados
+
+Fatores de conversão em CO₂ equivalente (GWP - Global Warming Potential):
+• N₂O: 1 kg = 298 kg CO₂e (IPCC AR5)
+• CH₄: 1 kg = 25 kg CO₂e (IPCC AR5)
 
 Com base exclusivamente na análise da imagem de satélite e nos dados fornecidos, responda obrigatoriamente e exclusivamente no formato abaixo.
 
@@ -152,12 +161,13 @@ Responda exatamente nos moldes abaixo:
 10. Área cultivada:
 11. Tipo de plantio atual:
 12. Produtividade média:
-13. Tamanho de area de Mata:
+13. Tamanho de área de Mata:
 14. Estimativa de carbono estocado na vegetação (toneladas de CO2 equivalente):
-15. Estimativa de emissões de GEE (toneladas de CO2 equivalente):
+15. Estimativa de emissões de GEE totais (toneladas de CO2 equivalente por ano):
 
 Para cada item:
-- Utilize inferência técnica baseada em práticas agronômicas conhecidas quando aplicável.`;
+- Utilize inferência técnica baseada em práticas agronômicas conhecidas quando aplicável.
+- Para o item 15, considere CO₂, N₂O e CH₄ convertidos em CO₂e.`;
 
         try {
             // excedemos a consulta diaria
@@ -234,6 +244,54 @@ DADOS GEOGRÁFICOS
 - Área total: ${areaTotal} hectares
 
 ═══════════════════════════════════════════════
+METODOLOGIA DE CÁLCULO DE GEE (OBRIGATÓRIA)
+═══════════════════════════════════════════════
+
+EMISSÕES POR GÁS (converter tudo para CO₂ equivalente):
+
+1. CO₂ (Dióxido de Carbono):
+   • Combustíveis fósseis (diesel, gasolina): usar fatores de emissão IPCC Tier 1
+   • Queima de resíduos: 1,5 tCO₂/ha queimada
+   • Mudança de uso do solo: usar fator de emissão conforme histórico
+
+2. N₂O (Óxido Nitroso) - GWP = 298:
+   • Fertilizantes nitrogenados sintéticos: 1% do N aplicado é emitido como N₂O (IPCC)
+   • Resíduos de cultura: 1% do N nos resíduos
+   • Ureia: fator de emissão 0,2 kg CO₂/kg ureia + emissões indiretas de N₂O
+   • Fixação biológica de N (leguminosas): considerar emissões indiretas
+   • Fórmula: kg N₂O × 298 = kg CO₂e
+
+3. CH₄ (Metano) - GWP = 25:
+   • Solos alagados/manejo de água: aplicar fator IPCC conforme sistema
+   • Resíduos orgânicos: considerar decomposição anaeróbica
+   • Queima de resíduos: 2,7 g CH₄/kg biomassa seca
+   • Fórmula: kg CH₄ × 25 = kg CO₂e
+
+SEQUESTRO/REMOÇÃO DE CARBONO:
+
+4. Estoque de Carbono no Solo:
+   • SPD > 20 anos: +0,5 a +0,8 tC/ha/ano (clima subtropical)
+   • SPD < 20 anos: +0,3 a +0,5 tC/ha/ano
+   • Plantio convencional: 0 ou negativo
+   • Converter: tC × 3,67 = tCO₂
+
+5. Biomassa Vegetal (Mata/Floresta):
+   • Mata Atlântica: ~150-200 tC/ha (estoque)
+   • Conversão anual: considerar apenas crescimento incremental
+   • Converter: tC × 3,67 = tCO₂
+
+CRÉDITOS DE CARBONO (METODOLOGIA CORRETA):
+
+⚠️ IMPORTANTE: Créditos de carbono NÃO se baseiam em estoque total, mas em:
+   a) Remoções/Sequestro ANUAL (adições ao estoque)
+   b) Reduções de emissões comparadas a linha de base
+
+Cálculo do Crédito:
+• Crédito = (Sequestro anual + Redução de emissões) - Emissões atuais
+• Apenas fluxos anuais contam para créditos
+• Estoque acumulado serve apenas como referência de potencial
+
+═══════════════════════════════════════════════
 INSTRUÇÕES
 ═══════════════════════════════════════════════
 
@@ -260,43 +318,85 @@ CARACTERIZAÇÃO DO USO DA TERRA
 • Área de mata/vegetação nativa: [X ha]
 • Produtividade média: [X kg/ha]
 
-ESTIMATIVA DE EMISSÕES DE GEE (tCO2e/ano)
-• Emissões por manejo do solo: [valor]
-• Emissões por uso de fertilizantes: [valor]
-• Emissões por queima de resíduos: [valor]
-• Emissões por combustíveis/maquinário: [valor]
-• TOTAL DE EMISSÕES: [valor] tCO2e/ano
+ESTIMATIVA DE EMISSÕES DE GEE (tCO₂e/ano)
 
-ESTIMATIVA DE REMOÇÕES/SEQUESTRO DE CARBONO (tCO2e)
-• Carbono estocado na vegetação nativa: [valor]
-• Carbono estocado no solo (SPD/manejo): [valor]
-• Sequestro anual estimado: [valor]
-• TOTAL DE CARBONO ESTOCADO: [valor] tCO2e
+📊 Emissões de CO₂:
+• Uso de diesel/combustíveis: [valor] tCO₂/ano
+• Queima de resíduos: [valor] tCO₂/ano
+• Subtotal CO₂: [valor] tCO₂/ano
 
-BALANÇO DE CARBONO E CRÉDITO LÍQUIDO
-• Total de emissões anuais: [valor] tCO2e/ano
-• Total de sequestro anual: [valor] tCO2e/ano
-• CRÉDITO LÍQUIDO DE CARBONO: [valor] tCO2e/ano
-• Situação: [POSITIVO — a propriedade sequestra mais do que emite / NEGATIVO — a propriedade emite mais do que sequestra]
+📊 Emissões de N₂O (convertido para CO₂e):
+• Fertilizantes nitrogenados sintéticos: [valor] tCO₂e/ano
+• Ureia: [valor] tCO₂e/ano
+• Resíduos de cultura: [valor] tCO₂e/ano
+• Emissões indiretas: [valor] tCO₂e/ano
+• Subtotal N₂O: [valor] tCO₂e/ano
+
+📊 Emissões de CH₄ (convertido para CO₂e):
+• Manejo de resíduos orgânicos: [valor] tCO₂e/ano
+• Outros: [valor] tCO₂e/ano
+• Subtotal CH₄: [valor] tCO₂e/ano
+
+🔴 TOTAL DE EMISSÕES ANUAIS: [valor] tCO₂e/ano
+
+ESTIMATIVA DE REMOÇÕES/SEQUESTRO DE CARBONO
+
+📈 Estoque Atual de Carbono (referência):
+• Carbono no solo (estoque acumulado): [valor] tCO₂e
+• Carbono na vegetação nativa (estoque acumulado): [valor] tCO₂e
+• ESTOQUE TOTAL: [valor] tCO₂e
+
+📈 Sequestro Anual de Carbono:
+• Sequestro anual pelo solo (SPD): [valor] tCO₂e/ano
+• Crescimento incremental da mata: [valor] tCO₂e/ano
+• Outros sumidouros: [valor] tCO₂e/ano
+
+🟢 TOTAL DE SEQUESTRO ANUAL: [valor] tCO₂e/ano
+
+BALANÇO DE CARBONO E POTENCIAL DE CRÉDITOS
+
+📊 Análise de Fluxo Anual:
+• Total de emissões anuais: [valor] tCO₂e/ano
+• Total de sequestro anual: [valor] tCO₂e/ano
+• BALANÇO LÍQUIDO ANUAL: [valor] tCO₂e/ano
+
+💰 Potencial de Créditos de Carbono:
+• Créditos geráveis por ano: [valor] tCO₂e/ano
+• Status: [POSITIVO - propriedade remove mais do que emite / NEGATIVO - propriedade emite mais do que remove / NEUTRO - emissões = remoções]
+• Observação: [se positivo, indicar elegibilidade para programas de crédito de carbono]
+
+⚠️ Diferença entre Estoque e Fluxo:
+• Estoque acumulado representa carbono já capturado no passado
+• Créditos são baseados em fluxo anual (remoções e reduções por ano)
+• Para certificação: apenas o balanço líquido anual é elegível
 
 METODOLOGIA APLICADA
 • Base: IPCC 2006 Guidelines, GHG Protocol, MRV
+• Gases considerados: CO₂, N₂O (GWP=298), CH₄ (GWP=25)
 • Nível de confiança: [baixo/médio/alto]
-• Observações metodológicas: [breve nota sobre limitações]
+• Observações metodológicas: [breve nota sobre limitações e precisão]
 
-RECOMENDAÇÕES
-• [3 a 5 recomendações práticas para melhorar o balanço de carbono]
+RECOMENDAÇÕES PARA AUMENTAR CRÉDITOS
+• [3 a 5 recomendações práticas específicas para:
+  1) Reduzir emissões de N₂O (maior fonte em agricultura)
+  2) Aumentar sequestro de carbono no solo
+  3) Melhorar gestão de fertilizantes
+  4) Expandir áreas de vegetação
+  5) Preparação para certificação de créditos]
 
 ══════════════════════════════════════════════════════════════
 Data do inventário: ${new Date().toLocaleDateString('pt-BR')}
 Sistema: Inventário de Propriedades Rurais v2.0
+Metodologia: IPCC 2006 + GHG Protocol + MRV
 ══════════════════════════════════════════════════════════════
 
 IMPORTANTE:
 - Use valores numéricos realistas baseados nos dados fornecidos.
-- Todos os valores devem estar em tCO2e (toneladas de CO2 equivalente).
-- Mantenha a formatação exata com os emojis.
-- Seja técnico mas compreensível.`;
+- Separe claramente emissões por gás (CO₂, N₂O, CH₄).
+- Distinga estoque acumulado de fluxo anual.
+- Créditos baseados APENAS em fluxo anual líquido.
+- Considere fatores de emissão do IPCC Tier 1 para região subtropical.
+- N₂O de fertilizantes é geralmente a maior fonte de emissões em agricultura.`;
 
         try {
             
@@ -319,40 +419,76 @@ CARACTERIZAÇÃO DO USO DA TERRA
 • Área de mata/vegetação nativa: 0,4 ha
 • Produtividade média: 3.800 kg/ha
 
-ESTIMATIVA DE EMISSÕES DE GEE (tCO2e/ano)
-• Emissões por manejo do solo: 3,2 tCO2e/ano
-• Emissões por uso de fertilizantes: 2,8 tCO2e/ano
-• Emissões por queima de resíduos: 0,0 tCO2e/ano
-• Emissões por combustíveis/maquinário: 3,2 tCO2e/ano
-• TOTAL DE EMISSÕES: 9,2 tCO2e/ano
+ESTIMATIVA DE EMISSÕES DE GEE (tCO₂e/ano)
 
-ESTIMATIVA DE REMOÇÕES/SEQUESTRO DE CARBONO (tCO2e)
-• Carbono estocado na vegetação nativa: 29,3 tCO2e
-• Carbono estocado no solo (SPD/manejo): 117,5 tCO2e
-• Sequestro anual estimado: 12,4 tCO2e/ano
-• TOTAL DE CARBONO ESTOCADO: 146,8 tCO2e
+📊 Emissões de CO₂:
+• Uso de diesel/combustíveis: 2,1 tCO₂/ano
+• Queima de resíduos: 0,0 tCO₂/ano
+• Subtotal CO₂: 2,1 tCO₂/ano
 
-BALANÇO DE CARBONO E CRÉDITO LÍQUIDO
-• Total de emissões anuais: 9,2 tCO2e/ano
-• Total de sequestro anual: 12,4 tCO2e/ano
-• CRÉDITO LÍQUIDO DE CARBONO: +3,2 tCO2e/ano
-• Situação: POSITIVO — a propriedade sequestra mais do que emite
+📊 Emissões de N₂O (convertido para CO₂e):
+• Fertilizantes nitrogenados sintéticos: 4,8 tCO₂e/ano
+• Ureia: 1,2 tCO₂e/ano
+• Resíduos de cultura: 0,8 tCO₂e/ano
+• Emissões indiretas: 0,6 tCO₂e/ano
+• Subtotal N₂O: 7,4 tCO₂e/ano
+
+📊 Emissões de CH₄ (convertido para CO₂e):
+• Manejo de resíduos orgânicos: 0,3 tCO₂e/ano
+• Outros: 0,1 tCO₂e/ano
+• Subtotal CH₄: 0,4 tCO₂e/ano
+
+🔴 TOTAL DE EMISSÕES ANUAIS: 9,9 tCO₂e/ano
+
+ESTIMATIVA DE REMOÇÕES/SEQUESTRO DE CARBONO
+
+📈 Estoque Atual de Carbono (referência):
+• Carbono no solo (estoque acumulado): 117,5 tCO₂e
+• Carbono na vegetação nativa (estoque acumulado): 29,3 tCO₂e
+• ESTOQUE TOTAL: 146,8 tCO₂e
+
+📈 Sequestro Anual de Carbono:
+• Sequestro anual pelo solo (SPD): 3,5 tCO₂e/ano
+• Crescimento incremental da mata: 0,2 tCO₂e/ano
+• Outros sumidouros: 0,0 tCO₂e/ano
+
+🟢 TOTAL DE SEQUESTRO ANUAL: 3,7 tCO₂e/ano
+
+BALANÇO DE CARBONO E POTENCIAL DE CRÉDITOS
+
+📊 Análise de Fluxo Anual:
+• Total de emissões anuais: 9,9 tCO₂e/ano
+• Total de sequestro anual: 3,7 tCO₂e/ano
+• BALANÇO LÍQUIDO ANUAL: -6,2 tCO₂e/ano
+
+💰 Potencial de Créditos de Carbono:
+• Créditos geráveis por ano: 0 tCO₂e/ano (balanço negativo)
+• Status: NEGATIVO - propriedade emite mais do que remove
+• Observação: Propriedade precisa reduzir emissões (principalmente N₂O) ou aumentar sequestro para gerar créditos
+
+⚠️ Diferença entre Estoque e Fluxo:
+• Estoque acumulado de 146,8 tCO₂e representa carbono já capturado no passado
+• Créditos são baseados em fluxo anual (remoções e reduções por ano)
+• Balanço anual atual é negativo (-6,2 tCO₂e/ano), não gerando créditos
+• Para certificação: necessário inverter o balanço para positivo
 
 METODOLOGIA APLICADA
 • Base: IPCC 2006 Guidelines, GHG Protocol, MRV
+• Gases considerados: CO₂, N₂O (GWP=298), CH₄ (GWP=25)
 • Nível de confiança: Médio
-• Observações metodológicas: Estimativas baseadas em fatores de emissão padrão do IPCC para região subtropical, com ajustes pelo sistema SPD. Valores de sequestro consideram biomassa acima do solo e carbono orgânico do solo. Recomenda-se validação com medições in loco.
+• Observações metodológicas: Estimativas baseadas em fatores de emissão IPCC Tier 1 para região subtropical. N₂O de fertilizantes representa 75% das emissões totais. Valores de sequestro consideram taxa conservadora para SPD >20 anos. Recomenda-se validação com medições in loco e análise de solo.
 
-RECOMENDAÇÕES
-• Ampliar a área de vegetação nativa para aumentar o sequestro de carbono, visando cumprir a reserva legal mínima de 20%
-• Implementar rotação de culturas com leguminosas para fixação biológica de nitrogênio e redução de fertilizantes sintéticos
-• Adotar agricultura de precisão para otimizar o uso de insumos e reduzir emissões por fertilizantes
-• Considerar implantação de sistema ILPF (Integração Lavoura-Pecuária-Floresta) para diversificar e aumentar o sequestro
-• Manter registros detalhados de insumos e práticas para futura certificação de créditos de carbono
+RECOMENDAÇÕES PARA AUMENTAR CRÉDITOS
+• Reduzir uso de fertilizantes nitrogenados sintéticos em 30-40% através de rotação com leguminosas (fixação biológica de N), o que pode economizar 2-3 tCO₂e/ano
+• Implementar agricultura de precisão para aplicação localizada de N, reduzindo perdas e emissões de N₂O em até 20%
+• Ampliar área de mata nativa de 0,4 ha para 1,2 ha (20% da propriedade - reserva legal), aumentando sequestro em ~0,8 tCO₂e/ano
+• Adotar sistema ILPF (Integração Lavoura-Pecuária-Floresta) com árvores para diversificar renda e aumentar sequestro de carbono
+• Iniciar monitoramento detalhado de insumos e práticas para futura certificação de créditos de carbono quando balanço se tornar positivo
 
 ══════════════════════════════════════════════════════════════
 Data do inventário: ${new Date().toLocaleDateString('pt-BR')}
 Sistema: Inventário de Propriedades Rurais v2.0
+Metodologia: IPCC 2006 + GHG Protocol + MRV
 ══════════════════════════════════════════════════════════════`;
 
             await new Promise(resolve => setTimeout(resolve, 5000));

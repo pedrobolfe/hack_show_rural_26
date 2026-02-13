@@ -74,20 +74,11 @@
           <button
             class="btn-download"
             (click)="downloadRelatorio(relatorio)"
-            [disabled]="relatorio.status !== 'concluido'"
           >
-            <span class="download-icon">⬇️</span>
-            {{ relatorio.status === 'concluido' ? 'Baixar Relatório' : 'Aguardando processamento' }}
+            Baixar Relatório
           </button>
         </div>
       </div>
-    </div>
-
-    <!-- Info Section -->
-    <div class="info-section">
-      <p class="info-text">
-        💡 Os relatórios são gerados automaticamente com base nas informações da sua propriedade
-      </p>
     </div>
   </div>
 </div>
