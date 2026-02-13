@@ -22,8 +22,15 @@ app.use(logger);
 app.use(passport.initialize());
 
 app.use(cors({
-  origin: ['http://localhost:4200', 'https://front-end-show-rural26.vercel.app/'],
-  credentials: true
+  origin: [
+    'http://localhost:4200',
+    'http://10.50.0.54:4200',
+    'https://front-end-show-rural26.vercel.app',
+    /https:\/\/.*\.vercel\.app$/
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.get('/', (_req: Request, res: Response) => {
@@ -63,9 +70,12 @@ app.use((_req: Request, res: Response) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`📡 http://localhost:${PORT}`);
-  console.log(`📱 http://10.50.0.54:${PORT}`);
-});
+// Apenas inicia o servidor se não estiver no ambiente serverless (Vercel)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`📡 http://localhost:${PORT}`);
+    console.log(`📱 http://10.50.0.54:${PORT}`);
+  });
+}
 
 export default app;
