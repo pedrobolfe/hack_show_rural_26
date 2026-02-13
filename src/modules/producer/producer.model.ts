@@ -12,6 +12,7 @@ export interface IProducer {
 }
 
 export interface IQuestionAndResponse {
+  num: number;
   question: string;
   response: string;
 }

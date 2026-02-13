@@ -178,6 +178,26 @@ class UserService {
 
     return true;
   }
+
+  async updateQuestions(id: string, questionsAndResponses: Array<{ num: number; question: string; response: string }>): Promise<UserModel> {
+    const docRef = this.usersRef.doc(id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    // Ordena as questões por número antes de salvar
+    const sortedQuestions = questionsAndResponses.sort((a, b) => a.num - b.num);
+
+    await docRef.update({
+      questionsAndResponses: sortedQuestions,
+      updatedAt: new Date()
+    });
+
+    const updatedDoc = await docRef.get();
+    return new UserModel({ id: updatedDoc.id, ...updatedDoc.data() });
+  }
 }
 
 export default new UserService();

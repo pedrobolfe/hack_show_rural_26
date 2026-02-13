@@ -4,6 +4,8 @@ export interface IRelatorio {
     id?: string;
     userId: string;
     response: string;
+    analise_imagem?: string; // Primeira etapa: análise da imagem de satélite
+    comparacao_dados?: string; // Segunda etapa: inventário final com comparação dos dados
     createdAt: Date;
 }
 
@@ -11,12 +13,16 @@ export class RelatorioModel implements IRelatorio {
     id?: string;
     userId: string;
     response: string;
+    analise_imagem?: string;
+    comparacao_dados?: string;
     createdAt: Date;
 
     constructor(data: Partial<IRelatorio>) {
         this.id = data.id;
         this.userId = data.userId || '';
         this.response = data.response || '';
+        this.analise_imagem = data.analise_imagem;
+        this.comparacao_dados = data.comparacao_dados;
         this.createdAt = data.createdAt || new Date();
     }
 
@@ -24,6 +30,8 @@ export class RelatorioModel implements IRelatorio {
         return {
             userId: this.userId,
             response: this.response,
+            analise_imagem: this.analise_imagem,
+            comparacao_dados: this.comparacao_dados,
             createdAt: this.createdAt,
         };
     }
@@ -33,6 +41,8 @@ export class RelatorioModel implements IRelatorio {
             id,
             userId: data.userId,
             response: data.response,
+            analise_imagem: data.analise_imagem,
+            comparacao_dados: data.comparacao_dados,
             createdAt: data.createdAt?.toDate() || new Date(),
         });
     }
@@ -40,18 +50,34 @@ export class RelatorioModel implements IRelatorio {
     /**
      * Cria um novo relatório no Firestore
      */
-    static async create(userId: string, response: string): Promise<string> {
-        const relatorioData = {
+    static async create(
+        userId: string,
+        response: string,
+        analise_imagem?: string,
+        comparacao_dados?: string
+    ): Promise<string> {
+        const relatorioData: any = {
             userId,
             response,
             createdAt: admin.firestore.Timestamp.now(),
         };
+
+        // Adicionar campos opcionais se fornecidos
+        if (analise_imagem) {
+            relatorioData.analise_imagem = analise_imagem;
+        }
+        if (comparacao_dados) {
+            relatorioData.comparacao_dados = comparacao_dados;
+        }
 
         const docRef = await admin.firestore()
             .collection('relatorios')
             .add(relatorioData);
 
         console.log('📄 Relatório criado com ID:', docRef.id);
+        console.log('   - Análise de imagem:', analise_imagem ? '✅ Incluída' : '❌ Não incluída');
+        console.log('   - Comparação de dados:', comparacao_dados ? '✅ Incluída' : '❌ Não incluída');
+        
         return docRef.id;
     }
 

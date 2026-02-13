@@ -31,4 +31,11 @@ router.post('/save-report', aiAnalysisController.saveReport);
  */
 router.post('/inventory', aiAnalysisController.generateInventory);
 
+/**
+ * POST /api/ai/generate-full-inventory
+ * Fluxo completo: Análise de imagem + Respostas do produtor → Inventário de Carbono
+ * Body: { "userId": "abc123", "customPrompt": "...", "inputs": {...} }
+ */
+router.post('/generate-full-inventory', aiAnalysisController.generateFullInventory);
+
 export default router;

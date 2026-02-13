@@ -398,7 +398,13 @@ Sistema: Inventário de Propriedades Rurais v2.0
             longitude
         );
 
-        const relatorioId = await RelatorioModel.create(userId, inventarioFinal);
+        // Salvar relatório com as duas etapas separadas
+        const relatorioId = await RelatorioModel.create(
+            userId,
+            inventarioFinal, // response principal (inventário final)
+            imageAnalysis.resposta_completa, // analise_imagem (primeira etapa)
+            inventarioFinal // comparacao_dados (segunda etapa - inventário completo)
+        );
 
         return {
             etapa1_analise_imagem: imageAnalysis.resposta_completa,
@@ -418,7 +424,12 @@ Sistema: Inventário de Propriedades Rurais v2.0
 *Relatório gerado automaticamente pelo Sistema de Inventário de Propriedades Rurais*
 `;
 
-        const relatorioId = await RelatorioModel.create(userId, analysis.resposta_completa);
+        const relatorioId = await RelatorioModel.create(
+            userId,
+            analysis.resposta_completa,
+            analysis.resposta_completa // analise_imagem
+            // comparacao_dados não fornecido aqui (apenas análise simples)
+        );
 
         return { report, relatorioId };
     }
@@ -438,7 +449,12 @@ Sistema: Inventário de Propriedades Rurais v2.0
 
         await fs.writeFile(reportPath, report, 'utf-8');
 
-        const relatorioId = await RelatorioModel.create(userId, analysis.resposta_completa);
+        const relatorioId = await RelatorioModel.create(
+            userId,
+            analysis.resposta_completa,
+            analysis.resposta_completa // analise_imagem
+            // comparacao_dados não fornecido aqui (apenas análise simples)
+        );
 
         return { reportPath, analysis, relatorioId };
     }

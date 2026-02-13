@@ -280,6 +280,55 @@ class AIAnalysisController {
             });
         }
     }
+
+    /**
+     * POST /api/ai/generate-full-inventory
+     * Fluxo completo com inputs customizados
+     * Body: {
+     *   "userId": "id_do_usuario",
+     *   "customPrompt": "prompt opcional",
+     *   "inputs": { areaTotal, coordenadas, ... }
+     * }
+     */
+    async generateFullInventory(req: Request, res: Response): Promise<void> {
+        try {
+            const { userId, customPrompt, inputs } = req.body;
+
+            if (!userId || typeof userId !== 'string') {
+                res.status(400).json({
+                    error: 'Campo "userId" é obrigatório e deve ser uma string'
+                });
+                return;
+            }
+
+            const defaultInputs = {
+                areaTotal: 100,
+                coordenadas: [[-53.6, -24.78], [-53.55, -24.78], [-53.55, -24.73], [-53.6, -24.73], [-53.6, -24.78]] as Array<[number, number]>,
+                usoSoloAtual: 'não especificado',
+            };
+
+            const analysisInputs = inputs || defaultInputs;
+            const prompt = customPrompt || '';
+
+            console.log('🚀 Iniciando fluxo completo de inventário para usuário:', userId);
+            const result = await aiAnalysisService.generateFullInventory(prompt, analysisInputs, userId);
+
+            res.status(200).json({
+                success: true,
+                relatorioId: result.relatorioId,
+                etapa1_analise_imagem: result.etapa1_analise_imagem,
+                etapa2_inventario_final: result.etapa2_inventario_final,
+                timestamp: result.timestamp,
+                mensagem: 'Inventário de carbono gerado e salvo com sucesso'
+            });
+        } catch (error: any) {
+            console.error('❌ Erro ao gerar inventário:', error.message);
+            res.status(500).json({
+                error: 'Erro ao gerar inventário de carbono',
+                detalhes: error.message
+            });
+        }
+    }
 }
 
 export default new AIAnalysisController();

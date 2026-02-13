@@ -10,6 +10,7 @@ router.get('/email/:email', (req, res) => userController.getByEmail(req, res));
 router.get('/car/:numCRA', (req, res) => userController.getByNumCRA(req, res));
 router.get('/:id', (req, res) => userController.getById(req, res));
 router.put('/:id', (req, res) => userController.update(req, res));
+router.put('/:id/questions', (req, res) => userController.updateQuestions(req, res));
 router.delete('/:id', (req, res) => userController.delete(req, res));
 
 export default router;

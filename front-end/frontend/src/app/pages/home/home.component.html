@@ -1,0 +1,93 @@
+<!-- Header Component -->
+<app-header [showLogoutButton]="true" (onLogout)="logout()"></app-header>
+
+<div class="home-container">
+  <div class="home-card">
+    <!-- User Info -->
+    <div class="user-info" *ngIf="user()">
+      <div class="avatar">
+        {{ user()!.name.charAt(0).toUpperCase() }}
+      </div>
+      <div class="user-details">
+        <h2 class="user-name">Olá, {{ user()?.name }}</h2>
+        <p class="user-email">{{ user()?.email }}</p>
+        <p class="user-car">CAR: {{ user()?.numCRA }}</p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-section">
+      <button class="btn-action" (click)="editQuestionario()">
+        <span class="icon">📝</span>
+        <div class="action-content">
+          <h3>Editar Questionário</h3>
+          <p>Atualizar informações da propriedade</p>
+        </div>
+      </button>
+
+      <button class="btn-action btn-generate" (click)="generateRelatorio()" [disabled]="generatingReport()">
+        <span class="icon">🚀</span>
+        <div class="action-content">
+          <h3>{{ generatingReport() ? 'Gerando Relatório...' : 'Gerar Relatório' }}</h3>
+          <p>{{ generatingReport() ? 'Aguarde, processando análise' : 'Criar novo inventário de carbono' }}</p>
+        </div>
+      </button>
+    </div>
+
+    <!-- Relatorios Section -->
+    <div class="relatorios-section">
+      <h2 class="section-title">Meus Relatórios</h2>
+
+      <div class="loading" *ngIf="loading()">
+        <div class="spinner"></div>
+        <p>Carregando relatórios...</p>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage()">
+        {{ errorMessage() }}
+      </div>
+
+      <div class="empty-state" *ngIf="!loading() && relatorios().length === 0 && !errorMessage()">
+        <span class="empty-icon">📄</span>
+        <h3>Nenhum relatório disponível</h3>
+        <p>Seus relatórios aparecerão aqui quando estiverem prontos</p>
+      </div>
+
+      <div class="relatorios-list" *ngIf="!loading() && relatorios().length > 0">
+        <div class="relatorio-card" *ngFor="let relatorio of relatorios()">
+          <div class="relatorio-header">
+            <h3 class="relatorio-title">{{ relatorio.title }}</h3>
+            <span class="badge" [ngClass]="getStatusBadgeClass(relatorio.status)">
+              {{ getStatusText(relatorio.status) }}
+            </span>
+          </div>
+
+          <div class="relatorio-info">
+            <p class="relatorio-type">
+              <strong>Tipo:</strong> {{ relatorio.type === 'inventario' ? 'Inventário' : 'Análise' }}
+            </p>
+            <p class="relatorio-date">
+              <strong>Criado em:</strong> {{relatorio.createdAt | date:'dd/MM/yyyy HH:mm' }}
+            </p>
+          </div>
+
+          <button
+            class="btn-download"
+            (click)="downloadRelatorio(relatorio)"
+            [disabled]="relatorio.status !== 'concluido'"
+          >
+            <span class="download-icon">⬇️</span>
+            {{ relatorio.status === 'concluido' ? 'Baixar Relatório' : 'Aguardando processamento' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Section -->
+    <div class="info-section">
+      <p class="info-text">
+        💡 Os relatórios são gerados automaticamente com base nas informações da sua propriedade
+      </p>
+    </div>
+  </div>
+</div>

@@ -19,18 +19,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(logger);
 
-// Inicializa o Passport para autenticação
 app.use(passport.initialize());
 
-// Permite requisições de qualquer origem
-// Para desenvolvimento, isso é aceitável.
-// Para produção, restrinja a origem.
 app.use(cors());
-
-// Exemplo de configuração mais restrita para produção:
-// app.use(cors({
-//   origin: 'http://localhost:8081' // Permite apenas requisições do seu frontend
-// }));
 
 app.get('/', (_req: Request, res: Response) => {
   res.json({ 
