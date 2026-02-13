@@ -5,10 +5,16 @@ export interface IProducer {
   documentId_hash?: string;
   email: string;
   phone?: string;
-  cooperativeId?: string;
-  userType: 'produtor' | 'cooperativa';
+  userType: 'produtor';
   createdAt: Date;
   updatedAt?: Date;
+  questionsAndResponses?: Array<IQuestionAndResponse>;
+}
+
+export interface IQuestionAndResponse {
+  num: number;
+  question: string;
+  response: string;
 }
 
 export class ProducerModel implements IProducer {
@@ -18,10 +24,10 @@ export class ProducerModel implements IProducer {
   documentId_hash?: string;
   email: string;
   phone?: string;
-  cooperativeId?: string;
-  userType: 'produtor' | 'cooperativa';
+  userType: 'produtor';
   createdAt: Date;
   updatedAt?: Date;
+  questionsAndResponses?: Array<IQuestionAndResponse>;
 
   constructor(data: Partial<IProducer>) {
     this.id = data.id;
@@ -30,10 +36,10 @@ export class ProducerModel implements IProducer {
     this.documentId_hash = data.documentId_hash;
     this.email = data.email!;
     this.phone = data.phone;
-    this.cooperativeId = data.cooperativeId;
-    this.userType = data.userType!;
+    this.userType = 'produtor';
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt;
+    this.questionsAndResponses = data.questionsAndResponses || [];
   }
 
   validate(): { isValid: boolean; errors: string[] } {
@@ -50,19 +56,6 @@ export class ProducerModel implements IProducer {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (this.email && !emailRegex.test(this.email)) {
       errors.push('Email inválido');
-    }
-
-    if (!this.userType) {
-      errors.push('Tipo de usuário é obrigatório');
-    }
-
-    const validUserTypes: ('produtor' | 'cooperativa')[] = ['produtor', 'cooperativa'];
-    if (this.userType && !validUserTypes.includes(this.userType)) {
-      errors.push('Tipo de usuário deve ser "produtor" ou "cooperativa"');
-    }
-
-    if (this.userType === 'produtor' && !this.cooperativeId) {
-      errors.push('Produtor deve estar vinculado a uma cooperativa');
     }
 
     return {
@@ -82,8 +75,8 @@ export class ProducerModel implements IProducer {
     if (this.uid) data.uid = this.uid;
     if (this.documentId_hash) data.documentId_hash = this.documentId_hash;
     if (this.phone) data.phone = this.phone;
-    if (this.cooperativeId) data.cooperativeId = this.cooperativeId;
     if (this.updatedAt) data.updatedAt = this.updatedAt;
+    if (this.questionsAndResponses) data.questionsAndResponses = this.questionsAndResponses;
 
     return data;
   }
@@ -95,10 +88,10 @@ export class ProducerModel implements IProducer {
       name: this.name,
       email: this.email,
       phone: this.phone,
-      cooperativeId: this.cooperativeId,
       userType: this.userType,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
+      questionsAndResponses: this.questionsAndResponses
     };
   }
 }
