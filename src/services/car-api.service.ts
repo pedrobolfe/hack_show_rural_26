@@ -1,4 +1,4 @@
-import axios from 'axios';
+// import axios from 'axios'; // TODO: descomentar quando integrar API real do CAR
 
 export interface ICarApiResponse {
   numero: string;
@@ -14,7 +14,7 @@ export interface ICarApiResponse {
 }
 
 class CarApiService {
-  private baseUrl = 'https://car.gov.br/publico/rest';
+  // private baseUrl = 'https://car.gov.br/publico/rest'; // TODO: habilitar quando API real
 
   async fetchCarData(carNumber: string): Promise<ICarApiResponse | null> {
     try {
@@ -45,13 +45,6 @@ class CarApiService {
       console.error('❌ Erro ao buscar dados do CAR:', error);
       return null;
     }
-  }
-
-  async validateCarNumber(carNumber: string): Promise<boolean> {
-    // Validação básica do formato do CAR
-    // Formato: BR-UF-MUNICIPIO-NUMERO
-    const carRegex = /^BR-[A-Z]{2}-\d{7}-[A-Z0-9]+$/;
-    return carRegex.test(carNumber);
   }
 }
 

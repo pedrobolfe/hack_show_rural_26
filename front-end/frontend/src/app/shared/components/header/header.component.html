@@ -1,0 +1,15 @@
+<header class="app-header">
+  <div class="header-content">
+    <div class="logo-section">
+      <h1 class="logo">ARES</h1>
+      <p class="app-subtitle">Sistema de Inventário Rural</p>
+    </div>
+    <button
+      *ngIf="showLogoutButton()"
+      class="btn-logout"
+      (click)="handleLogout()"
+    >
+      Sair
+    </button>
+  </div>
+</header>

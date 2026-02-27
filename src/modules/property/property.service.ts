@@ -33,8 +33,7 @@ class PropertyService {
   }
 
   async syncCarData(propertyId: string, carNumber: string): Promise<PropertyModel> {
-    const isValid = await carApiService.validateCarNumber(carNumber);
-    if (!isValid) {
+    if (!carNumber || carNumber.trim().length === 0) {
       throw new Error('Número do CAR inválido');
     }
 
@@ -89,7 +88,12 @@ class PropertyService {
     });
 
     const updated = await docRef.get();
-    return new PropertyModel({ id: updated.id, ...updated.data() });
+    const propertyModel = new PropertyModel({ id: updated.id, ...updated.data() });
+
+    // Nota: imagens de satélite são obtidas sob demanda via rotas /satellite/*
+    console.log(`✅ Dados do CAR sincronizados para propriedade ${propertyId}`);
+
+    return propertyModel;
   }
 
   async findAll(limit = 50): Promise<PropertyModel[]> {

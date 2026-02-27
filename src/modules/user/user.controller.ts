@@ -155,6 +155,31 @@ class UserController {
       });
     }
   }
+
+  async updateQuestions(req: Request, res: Response) {
+    try {
+      const { questionsAndResponses } = req.body;
+      
+      if (!Array.isArray(questionsAndResponses)) {
+        return res.status(400).json({
+          success: false,
+          error: 'questionsAndResponses deve ser um array'
+        });
+      }
+
+      const user = await userService.updateQuestions(req.params.id as string, questionsAndResponses);
+      return res.status(200).json({
+        success: true,
+        data: user,
+        message: 'Respostas salvas com sucesso'
+      });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        error: (error as Error).message
+      });
+    }
+  }
 }
 
 export default new UserController();

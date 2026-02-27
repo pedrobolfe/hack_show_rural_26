@@ -1,13 +1,23 @@
+import { IQuestionAndResponse } from "../producer/producer.model";
+
 export interface IUser {
   id?: string;
   name: string;
   email: string;
   phone?: string;
   role: string;
-  userType: 'produtor' | 'cooperativa';
-  numCRA?: string;
+  userType: 'produtor';
+  numCRA: string;
   createdAt: Date;
   updatedAt: Date;
+  questionsAndResponses?: Array<IQuestionAndResponse>;
+  // Campos do último relatório de carbono
+  lastReportDate?: Date;
+  totalEmissoes?: number; // tCO₂e/ano
+  totalRemocoes?: number; // tCO₂e/ano
+  balancoLiquido?: number; // tCO₂e/ano
+  statusCarbono?: 'POSITIVO' | 'NEGATIVO' | 'NEUTRO';
+  creditosGeraveis?: number; // tCO₂e/ano
 }
 
 export class UserModel implements IUser {
@@ -16,10 +26,19 @@ export class UserModel implements IUser {
   email: string;
   phone?: string;
   role: string;
-  userType: 'produtor' | 'cooperativa';
-  numCRA?: string;
+  userType: 'produtor';
+  numCRA: string;
   createdAt: Date;
   updatedAt: Date;
+  questionsAndResponses?: Array<IQuestionAndResponse>;
+  // Campos do último relatório de carbono
+  lastReportDate?: Date;
+  totalEmissoes?: number;
+  totalRemocoes?: number;
+  balancoLiquido?: number;
+  statusCarbono?: 'POSITIVO' | 'NEGATIVO' | 'NEUTRO';
+  creditosGeraveis?: number;
+  
 
   constructor(data: Partial<IUser>) {
     this.id = data.id;
@@ -27,10 +46,18 @@ export class UserModel implements IUser {
     this.email = data.email!;
     this.phone = data.phone;
     this.role = data.role || 'user';
-    this.userType = data.userType!;
-    this.numCRA = data.numCRA;
+    this.userType = 'produtor';
+    this.numCRA = data.numCRA!;
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
+    this.questionsAndResponses = data.questionsAndResponses || [];
+    // Campos do último relatório
+    this.lastReportDate = data.lastReportDate;
+    this.totalEmissoes = data.totalEmissoes;
+    this.totalRemocoes = data.totalRemocoes;
+    this.balancoLiquido = data.balancoLiquido;
+    this.statusCarbono = data.statusCarbono;
+    this.creditosGeraveis = data.creditosGeraveis;
   }
 
   validate(): { isValid: boolean; errors: string[] } {
@@ -53,23 +80,13 @@ export class UserModel implements IUser {
       errors.push('Email inválido');
     }
 
-    if (!this.userType) {
-      errors.push('Tipo de usuário é obrigatório');
+    // CAR é obrigatório para produtor
+    if (!this.numCRA || this.numCRA.trim() === '') {
+      errors.push('Número do CAR é obrigatório');
     }
-
-    const validUserTypes: ('produtor' | 'cooperativa')[] = ['produtor', 'cooperativa'];
-    if (this.userType && !validUserTypes.includes(this.userType)) {
-      errors.push('Tipo de usuário deve ser "produtor" ou "cooperativa"');
-    }
-
-    if (this.userType === 'produtor') {
-      if (!this.numCRA || this.numCRA.trim() === '') {
-        errors.push('Número do CAR é obrigatório para produtores');
-      }
-      
-      if (this.numCRA && this.numCRA.length < 10) {
-        errors.push('Número do CAR deve ter no mínimo 10 caracteres');
-      }
+    
+    if (this.numCRA && this.numCRA.length < 10) {
+      errors.push('Número do CAR deve ter no mínimo 10 caracteres');
     }
 
     return {
@@ -79,39 +96,45 @@ export class UserModel implements IUser {
   }
 
   toFirestore(): Omit<IUser, 'id'> {
-    const data: any = {
+    return {
       name: this.name,
       email: this.email,
       phone: this.phone,
       role: this.role,
       userType: this.userType,
+      numCRA: this.numCRA,
+      questionsAndResponses: this.questionsAndResponses || [],
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
+      // Campos do último relatório
+      lastReportDate: this.lastReportDate,
+      totalEmissoes: this.totalEmissoes,
+      totalRemocoes: this.totalRemocoes,
+      balancoLiquido: this.balancoLiquido,
+      statusCarbono: this.statusCarbono,
+      creditosGeraveis: this.creditosGeraveis
     };
-
-    if (this.userType === 'produtor' && this.numCRA) {
-      data.numCRA = this.numCRA;
-    }
-
-    return data;
   }
 
   toJSON(): IUser {
-    const data: any = {
+    return {
       id: this.id,
       name: this.name,
       email: this.email,
       phone: this.phone,
       role: this.role,
       userType: this.userType,
+      numCRA: this.numCRA,
+      questionsAndResponses: this.questionsAndResponses || [],
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
+      // Campos do último relatório
+      lastReportDate: this.lastReportDate,
+      totalEmissoes: this.totalEmissoes,
+      totalRemocoes: this.totalRemocoes,
+      balancoLiquido: this.balancoLiquido,
+      statusCarbono: this.statusCarbono,
+      creditosGeraveis: this.creditosGeraveis
     };
-
-    if (this.userType === 'produtor' && this.numCRA) {
-      data.numCRA = this.numCRA;
-    }
-
-    return data;
   }
 }

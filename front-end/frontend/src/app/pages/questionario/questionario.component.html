@@ -1,0 +1,93 @@
+<!-- Header Component -->
+<app-header [showLogoutButton]="true" (onLogout)="logout()"></app-header>
+
+<div class="questionario-container">
+  <div class="questionario-card">
+    <div class="questionnaire-intro">
+      <h2 class="questionnaire-title">📋 Questionário de Inventário</h2>
+    </div>
+
+    <!-- Question Form -->
+    <form [formGroup]="questionForm" (ngSubmit)="onSubmit()" class="question-form">
+      <div class="question-container">
+        <!-- Section Header -->
+        <div class="section-header" *ngIf="currentQuestion().section">
+          <span class="section-badge">{{ currentQuestion().section }}</span>
+        </div>
+
+        <!-- Subsection Header -->
+        <div class="subsection-header" *ngIf="currentQuestion().subsection">
+          <span class="subsection-text">{{ currentQuestion().subsection }}</span>
+        </div>
+
+        <h2 class="question-title">
+          {{ currentQuestion().question }}
+        </h2>
+
+        <div class="form-group">
+          <input
+            [type]="currentQuestion().type || 'text'"
+            [id]="'question-' + currentQuestion().num"
+            [formControl]="currentControl"
+            [name]="'question-' + currentQuestion().num"
+            [placeholder]="currentQuestion().placeholder"
+            [step]="currentQuestion().type === 'number' ? 'any' : undefined"
+            class="input-field"
+            autocomplete="off"
+            [attr.data-question-num]="currentQuestion().num"
+            [attr.data-step]="currentStep()"
+          />
+        </div>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage()">
+        {{ errorMessage() }}
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-bar" [style.width.%]="progress()"></div>
+      </div>
+      <p class="progress-text">Pergunta {{ currentStep() + 1 }} de {{ totalSteps() }}</p>
+
+      <div class="button-group">
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="previousStep()"
+          [disabled]="currentStep() === 0"
+        >
+          Anterior
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="nextStep()"
+          *ngIf="currentStep() < totalSteps() - 1"
+        >
+          Próxima
+        </button>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="loading()"
+          *ngIf="currentStep() === totalSteps() - 1"
+        >
+          {{ loading() ? 'Salvando...' : 'Finalizar' }}
+        </button>
+
+        <!-- Botão de Finalizar/Pular para o final -->
+        <button
+          type="submit"
+          class="btn-finish"
+          [disabled]="loading()"
+          *ngIf="currentStep() < totalSteps() - 1"
+          title="Salvar e finalizar questionário"
+        >
+          {{ loading() ? 'Salvando...' : '✓ Finalizar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

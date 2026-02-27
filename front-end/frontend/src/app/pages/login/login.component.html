@@ -1,0 +1,127 @@
+<div class="login-container">
+  <div class="login-card">
+    <!-- Logo -->
+    <div class="logo-container">
+      <h1 class="logo">ARES</h1>
+      <p class="subtitle">Sistema de Inventário Rural</p>
+    </div>
+
+    <!-- Login Form -->
+    <form *ngIf="isLoginMode()" [formGroup]="loginForm" (ngSubmit)="onLogin()" class="form">
+      <h2 class="form-title">Entrar</h2>
+
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input
+          id="login-email"
+          type="email"
+          formControlName="email"
+          placeholder="seu@email.com"
+          [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+        />
+        <span class="error-text" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          Email inválido
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="login-password">Senha</label>
+        <input
+          id="login-password"
+          type="password"
+          formControlName="password"
+          placeholder="••••••••"
+          [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+        />
+        <span class="error-text" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          Senha deve ter no mínimo 6 caracteres
+        </span>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage()">
+        {{ errorMessage() }}
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Entrando...' : 'Entrar' }}
+      </button>
+
+      <p class="toggle-text">
+        Não tem uma conta?
+        <a (click)="toggleMode()">Cadastre-se</a>
+      </p>
+    </form>
+
+    <!-- Register Form -->
+    <form *ngIf="!isLoginMode()" [formGroup]="registerForm" (ngSubmit)="onRegister()" class="form">
+      <h2 class="form-title">Criar Conta</h2>
+
+      <div class="form-group">
+        <label for="register-name">Nome Completo</label>
+        <input
+          id="register-name"
+          type="text"
+          formControlName="name"
+          placeholder="Seu nome"
+          [class.error]="registerForm.get('name')?.invalid && registerForm.get('name')?.touched"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="register-email">Email</label>
+        <input
+          id="register-email"
+          type="email"
+          formControlName="email"
+          placeholder="seu@email.com"
+          [class.error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="register-phone">Telefone</label>
+        <input
+          id="register-phone"
+          type="tel"
+          formControlName="phone"
+          placeholder="(00) 00000-0000"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="register-car">Número do CAR</label>
+        <input
+          id="register-car"
+          type="text"
+          formControlName="numCRA"
+          placeholder="Número do CAR"
+          [class.error]="registerForm.get('numCRA')?.invalid && registerForm.get('numCRA')?.touched"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="register-password">Senha</label>
+        <input
+          id="register-password"
+          type="password"
+          formControlName="password"
+          placeholder="••••••••"
+          [class.error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+        />
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage()">
+        {{ errorMessage() }}
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Criando conta...' : 'Criar Conta' }}
+      </button>
+
+      <p class="toggle-text">
+        Já tem uma conta?
+        <a (click)="toggleMode()">Entre aqui</a>
+      </p>
+    </form>
+  </div>
+</div>
